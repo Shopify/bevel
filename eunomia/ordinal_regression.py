@@ -1,7 +1,9 @@
 import numpy as np
 from scipy import optimize
-from sklearn import base
+from numpy.linalg import inv
+from scipy.linalg import block_diag
 
+from numdifftools import Hessian
 
 def logistic(z):
     positive_z = z > 0
@@ -12,10 +14,10 @@ def logistic(z):
     return logistic
 
 
-class OrdinalRegression(base.BaseEstimator):
+class OrdinalRegression():
 
     def __init__(self):
-        super().__init__()
+        pass
 
     def fit(self, X, y):
         X = np.asarray(X)
@@ -40,19 +42,36 @@ class OrdinalRegression(base.BaseEstimator):
             args=(X, y),
             bounds=bounds
         )
-        
+
         self.beta_ = optimization.x[:self.n_attributes]
         self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
+
+        hessian_function = Hessian(self.log_likelihood)
+        hessian = hessian_function(optimization.x, X, y)
+        
+        upper_left_diagonal = np.identity(self.n_attributes)
+        lower_right_triangular = np.tril(np.ones((self.n_classes - 1, self.n_classes-1), dtype=np.float))
+        jacobian = block_diag(upper_left_diagonal, lower_right_triangular)
+
+        new_hessian = jacobian.T.dot(hessian.dot(jacobian))
+        new_hessian_inverse = inv(new_hessian)
+
+        self.beta_ = optimization.x[:self.n_attributes]
+        self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
+
+
+        import ipdb; ipdb.set_trace()
+
         return self
 
     def log_likelihood(self, x0, X, y):
         beta = x0[:self.n_attributes]
         gamma = x0[self.n_attributes:]
 
-        alphas = np.cumsum(gamma)
-        alphas = np.insert(alphas, 0, -np.inf)
-        alphas = np.append(alphas, np.inf)
+        _alpha = np.cumsum(gamma)
+        _alpha = np.insert(_alpha, 0, -np.inf)
+        _alpha = np.append(_alpha, np.inf)
 
-        z_plus = alphas[y] - X.dot(beta)
-        z_minus = alphas[y-1] - X.dot(beta)
-        return -2.0 * np.sum(np.log(logistic(z_plus) - logistic(z_minus))) 
+        z_plus = _alpha[y] - X.dot(beta)
+        z_minus = _alpha[y-1] - X.dot(beta)
+        return - 1.0 * np.sum(np.log(logistic(z_plus) - logistic(z_minus))) 

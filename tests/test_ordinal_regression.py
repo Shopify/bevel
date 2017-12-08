@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 
+import pandas as pd
+
 from numpy.testing import assert_array_equal
 
 from eunomia.ordinal_regression import OrdinalRegression
@@ -38,3 +40,18 @@ class TestOrdinalRegression():
 
     def test_zero_y_raises_value_error(self, X, y):
         pass
+
+    def test_ucla_data(self):
+
+        SCORE_MAP = {
+            'unlikely': 1,
+            'somewhat likely': 2,
+            'very likely': 3
+        }
+
+        ucla_data = pd.read_stata('ucla.dta')
+        y = ucla_data['apply'].map(SCORE_MAP).values
+        X = ucla_data[['pared', 'public', 'gpa']].values
+        
+        ordinal_regression = OrdinalRegression()
+        ordinal_regression.fit(X, y)
