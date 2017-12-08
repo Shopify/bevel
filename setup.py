@@ -22,7 +22,7 @@ setup(
     name="eunomia",
     version=__version__,
     author="Ross Diener, Steven Wu, Cameron Davidson-Pilon",
-    author_email="ross.diener@shopify.com ",
+    author_email="ross.diener@shopify.com",
     description="Ordinal regression in Python",
     license="MIT",
     keywords="oridinal regression statistics data analysis",
