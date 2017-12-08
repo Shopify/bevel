@@ -75,4 +75,4 @@ class OrdinalRegression():
 
         z_plus = _alpha[y] - X.dot(beta)
         z_minus = _alpha[y-1] - X.dot(beta)
-        return - 1.0 * np.sum(np.log(logistic(z_plus) - logistic(z_minus))) 
+        return - 1.0 * np.sum(np.log(logistic(z_plus) - logistic(z_minus)))

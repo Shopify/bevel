@@ -68,5 +68,4 @@ class TestOrdinalRegression():
         ordinal_regression.n_attributes = 1
         actual = ordinal_regression.log_likelihood(coefficients, X, y)
         expected = - 3.0 * np.log(0.5)
-        assert actual == expected   
-            
+        assert actual == expected
