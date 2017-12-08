@@ -19,9 +19,6 @@ ucla_data = pd.read_stata(filepath)
 # (accessed 8 December, 2017).
 
 
-
-
-
 @pytest.fixture
 def X_ucla():
     return ucla_data[['pared', 'public', 'gpa']].values
