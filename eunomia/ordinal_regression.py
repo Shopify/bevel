@@ -5,8 +5,6 @@ from scipy.linalg import block_diag
 from numpy.linalg import inv
 from numdifftools import Hessian
 
-import warnings
-warnings.filterwarnings(action="ignore", module="scipy", message="^internal gelsd")
 
 def logistic(z):
     positive_z = z > 0
