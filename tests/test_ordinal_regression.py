@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-
+import os
 import pandas as pd
 
 from numpy.testing import assert_array_equal
@@ -9,11 +9,18 @@ from numpy.testing import assert_array_almost_equal
 from eunomia.ordinal_regression import OrdinalRegression
 from eunomia.ordinal_regression import logistic
 
+eunomia_dir = os.path.dirname(os.path.realpath(__file__))
+eunomia_root_dir = os.path.dirname(eunomia_dir)
+filepath = os.path.join(eunomia_root_dir, 'data/ucla.dta')
 
-ucla_data = pd.read_stata('ucla.dta')
+ucla_data = pd.read_stata(filepath)
 # Ordinal Logistic Regression. UCLA: Statistical Consulting Group.
 # from https://stats.idre.ucla.edu/r/dae/ordinal-logistic-regression/
 # (accessed 8 December, 2017).
+
+
+
+
 
 @pytest.fixture
 def X_ucla():
