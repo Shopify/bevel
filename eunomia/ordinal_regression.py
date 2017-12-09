@@ -60,7 +60,7 @@ class OrdinalRegression():
 
     def jacobian(self):
         upper_left_diagonal = np.identity(self.n_attributes)
-        lower_right_triangular = np.tril(np.ones((self.n_classes - 1, self.n_classes-1), dtype=np.float))
+        lower_right_triangular = np.tril(np.ones((self.n_classes - 1, self.n_classes-1)))
         return block_diag(upper_left_diagonal, lower_right_triangular)
 
     def log_likelihood(self, coefficients, X, y):
