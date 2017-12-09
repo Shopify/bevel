@@ -1,9 +1,9 @@
 import numpy as np
 
+from numdifftools import Hessian
+from numpy.linalg import inv
 from scipy import optimize
 from scipy.linalg import block_diag
-from numpy.linalg import inv
-from numdifftools import Hessian
 
 
 def logistic(z):
@@ -21,18 +21,7 @@ class OrdinalRegression():
         pass
 
     def fit(self, X, y):
-        X = np.asarray(X)
-        y = np.asarray(y).astype(np.int)
-
-        self.n_classes = np.max(y)
-        self.N, self.n_attributes = X.shape
-
-        y_values = np.sort(np.unique(y))
-        y_range = np.arange(1, self.n_classes + 1)
-        
-        #TODO: clean the data instead of raising an error
-        if np.any(y_values != y_range):
-            raise ValueError('Values in y must be in {}, but received {}'.format(y_range, y_values))
+        X, y = self.clean(X, y)
 
         beta_guess = np.zeros(self.n_attributes)
         gamma_guess = np.ones(self.n_classes - 1)
@@ -45,12 +34,27 @@ class OrdinalRegression():
             bounds=bounds
         )
 
-        self.gamma_ = optimization.x[self.n_attributes:]
-        self.beta_ = optimization.x[:self.n_attributes]
-        self.alpha_ = np.cumsum(self.gamma_)
-        self.coef_ = np.append(self.beta_, self.alpha_)
+        self.set_parameters(optimization.x)
         self.se_ = self.standard_errors(X, y)
         return self
+
+    def set_parameters(self, optimization_x):
+        self.gamma_ = optimization_x[self.n_attributes:]
+        self.beta_ = optimization_x[:self.n_attributes]
+        self.alpha_ = np.cumsum(self.gamma_)
+        self.coef_ = np.append(self.beta_, self.alpha_)
+
+    def clean(self, X, y):
+        X = np.asarray(X)
+        self.N, self.n_attributes = X.shape
+
+        y = np.asarray(y).astype(np.int)
+        y_values = np.sort(np.unique(y))
+        self.n_classes = len(y_values)
+        y_range = np.arange(1, self.n_classes + 1)
+        y = np.vectorize(dict(zip(y_values, y_range)).get)(y)
+        
+        return X, y
 
     def standard_errors(self, X, y):
         hessian_function = Hessian(self.log_likelihood, method='forward')

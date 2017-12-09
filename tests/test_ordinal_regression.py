@@ -1,13 +1,13 @@
-import pytest
 import numpy as np
 import os
 import pandas as pd
+import pytest
 
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-
-from eunomia.ordinal_regression import OrdinalRegression
 from eunomia.ordinal_regression import logistic
+from eunomia.ordinal_regression import OrdinalRegression
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+
 
 eunomia_dir = os.path.dirname(os.path.realpath(__file__))
 eunomia_root_dir = os.path.dirname(eunomia_dir)
@@ -73,3 +73,13 @@ class TestOrdinalRegression():
         actual = ordinal_regression.log_likelihood(coefficients, X, y)
         expected = - 3.0 * np.log(0.5)
         assert actual == expected
+
+    def test_clean_y(self):
+        ordinal_regression = OrdinalRegression()
+        y = np.array([1,3,5])
+        expected = np.array([1,2,3])
+        _, actual = ordinal_regression.clean(np.empty((1,1)), y)
+        assert_array_equal(actual, expected)
+        assert ordinal_regression.N == 1
+        assert ordinal_regression.n_attributes == 1
+        assert ordinal_regression.n_classes == 3
