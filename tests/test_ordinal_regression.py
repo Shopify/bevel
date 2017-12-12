@@ -3,17 +3,17 @@ import os
 import pandas as pd
 import pytest
 
-from eunomia.ordinal_regression import logistic
-from eunomia.ordinal_regression import OrdinalRegression
+from bevel.ordinal_regression import logistic
+from bevel.ordinal_regression import OrdinalRegression
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
 from scipy import stats
 
 
-eunomia_dir = os.path.dirname(os.path.realpath(__file__))
-eunomia_root_dir = os.path.dirname(eunomia_dir)
-filepath = os.path.join(eunomia_root_dir, 'data/ucla.dta')
+bevel_dir = os.path.dirname(os.path.realpath(__file__))
+bevel_root_dir = os.path.dirname(bevel_dir)
+filepath = os.path.join(bevel_root_dir, 'data/ucla.dta')
 
 ucla_data = pd.read_stata(filepath)
 # Ordinal Logistic Regression. UCLA: Statistical Consulting Group.
