@@ -1,6 +1,5 @@
 eunomia/__pycache__/*
 tests/__pycache__/*
 *.pyc
-.cache/*
+**/.cache/*
 .DS_Store
-.DS_Store?
