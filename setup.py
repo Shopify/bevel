@@ -6,8 +6,8 @@ from setuptools import setup
 def filepath(fname):
     return os.path.join(os.path.dirname(__file__), fname)
 
-exec(compile(open('eunomia/version.py').read(),
-                  'eunomia/version.py', 'exec'))
+exec(compile(open('bevel/version.py').read(),
+                  'bevel/version.py', 'exec'))
 
 readme_md = filepath('README.md')
 
@@ -19,15 +19,15 @@ except(ImportError):
 
 
 setup(
-    name="eunomia",
+    name="bevel",
     version=__version__,
     author="Ross Diener, Steven Wu, Cameron Davidson-Pilon",
     author_email="ross.diener@shopify.com",
     description="Ordinal regression in Python",
     license="MIT",
     keywords="oridinal regression statistics data analysis",
-    url="https://github.com/ShopifyHR/eunomia",
-    packages=['eunomia',
+    url="https://github.com/ShopifyHR/bevel",
+    packages=['bevel',
               ],
     long_description=readme_rst,
     classifiers=[
@@ -40,7 +40,7 @@ setup(
     install_requires=[
     ],
     package_data={
-        "eunomia": [
+        "bevel": [
             "../README.md",
             "../LICENSE",
         ]
