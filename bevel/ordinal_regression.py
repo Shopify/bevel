@@ -60,6 +60,36 @@ class OrdinalRegression():
         df['upper %.2f' % self.alpha] = self.beta_ + alpha_std_normal * self.se_[:self.n_attributes]
         return df
 
+    def print_summary(self):
+        """
+        Print summary statistics describing the fit.
+
+        """
+        def significance_code(p):
+            if p < 0.001:
+                return '***'
+            elif p < 0.01:
+                return '**'
+            elif p < 0.05:
+                return '*'
+            elif p < 0.1:
+                return '.'
+            else:
+                return ' '
+
+        df = self.summary
+        # Significance codes last
+        df[''] = [significance_code(p) for p in df['p']]
+
+        # Print information about data first
+        print('n={}'.format(self.N), end="\n")
+        print(df.to_string(float_format=lambda f: '{:4.4f}'.format(f)))
+        # Significance code explanation
+        print('---')
+        print("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 ",
+              end='\n\n')
+        return
+
     def _clean(self, X, y):
         if type(X) == DataFrame:
             self.attribute_names = X.columns.tolist()
