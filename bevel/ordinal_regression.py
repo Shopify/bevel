@@ -1,12 +1,13 @@
 import numpy as np
+import pandas as pd
+import warnings
 
 from numdifftools import Hessian
 from numpy.linalg import inv
-from pandas import DataFrame
 from scipy import optimize
 from scipy.linalg import block_diag
 from scipy.stats import norm
-import pandas as pd
+
 
 
 def logistic(z):
@@ -20,8 +21,10 @@ def logistic(z):
 
 class OrdinalRegression():
 
-    def __init__(self, alpha=0.95):
+    def __init__(self, alpha=0.95, maxfun=100000, maxiter=100000):
         self.alpha = alpha
+        self.maxfun = maxfun
+        self.maxiter = maxiter
 
     def fit(self, X, y):
         X_data, y_data = self._clean(X, y)
@@ -34,8 +37,14 @@ class OrdinalRegression():
             self._log_likelihood,
             np.append(beta_guess, gamma_guess),
             args=(X_data, y_data),
-            bounds=bounds
+            bounds=bounds,
+            method='L-BFGS-B',
+            options={'maxfun': self.maxfun, 'maxiter': self.maxiter}
         )
+        
+        if not optimization.success:
+            warning_message = 'Likelihood maximization failed - ' + str(optimization.message, 'utf-8')
+            warnings.warn(warning_message, RuntimeWarning)
 
         self._set_coefficients(optimization.x)
         self.se_ = self._standard_errors(X_data, y_data)
@@ -44,14 +53,17 @@ class OrdinalRegression():
 
     @property
     def summary(self):
-        """Summary statistics describing the fit.
+        """
+        Summary statistics describing the fit.
 
         Returns
         -------
         df : pd.DataFrame
-            Contains columns coef, se(coef), p, lower, upper"""
+            Contains columns coef, se(coef), p, lower, upper
+        """
 
         alpha_std_normal = norm.ppf((1. + self.alpha) / 2.)
+        index = self.attribute_names or ['column_' + str(i) for i in range(self.n_attributes)]
         df = pd.DataFrame(index=self.attribute_names)
         df['coef'] = self.beta_
         df['se(coef)'] = self.se_[:self.n_attributes]
@@ -61,7 +73,7 @@ class OrdinalRegression():
         return df
 
     def _clean(self, X, y):
-        if type(X) == DataFrame:
+        if type(X) == pd.DataFrame:
             self.attribute_names = X.columns.tolist()
 
         X_data = np.asarray(X)
