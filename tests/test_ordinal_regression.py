@@ -28,7 +28,7 @@ def X_ucla():
 @pytest.fixture
 def y_ucla():
     return ucla_data['apply'].map({'unlikely': 1,'somewhat likely': 2,'very likely': 3})
-   
+
 
 def test_logistic():
     z = np.array([0., np.inf, -np.inf])
@@ -41,25 +41,24 @@ class TestOrdinalRegression():
     def test_ucla_coef(self, X_ucla, y_ucla):
         ordinal_regression = OrdinalRegression()
         ordinal_regression.fit(X_ucla, y_ucla)
-        
         expected_coef_ = np.array([1.04769, -0.05879, 0.61594, 2.20391, 4.29936])
         assert_allclose(ordinal_regression.coef_, expected_coef_, rtol=0.01)
 
-    def test_ucla_se(self, X_ucla, y_ucla):              
+    def test_ucla_se(self, X_ucla, y_ucla):
         ordinal_regression = OrdinalRegression()
         ordinal_regression.fit(X_ucla, y_ucla)
 
         expected_se_ = np.array([0.2658, 0.2979, 0.2606, 0.7795, 0.8043])
         assert_allclose(ordinal_regression.se_, expected_se_, rtol=0.01)
 
-    def test_ucla_z_values(self, X_ucla, y_ucla):              
+    def test_ucla_z_values(self, X_ucla, y_ucla):
         ordinal_regression = OrdinalRegression()
         ordinal_regression.fit(X_ucla, y_ucla)
 
         expected_z_values_ = np.array([3.9418, -0.1974, 2.3632, 2.8272, 5.3453])
         assert_allclose(ordinal_regression._z_values(), expected_z_values_, rtol=0.01)
 
-    def test_ucla_p_values(self, X_ucla, y_ucla):              
+    def test_ucla_p_values(self, X_ucla, y_ucla):
         ordinal_regression = OrdinalRegression()
         ordinal_regression.fit(X_ucla, y_ucla)
 
@@ -99,3 +98,12 @@ class TestOrdinalRegression():
         assert ordinal_regression.N == 1
         assert ordinal_regression.n_attributes == 1
         assert ordinal_regression.n_classes == 3
+
+    def test_summary(self, X_ucla, y_ucla):
+        ordinal_regression = OrdinalRegression(alpha=0.95)
+        ordinal_regression.fit(X_ucla, y_ucla)
+        assert 'coef' in ordinal_regression.summary
+        assert 'se(coef)' in ordinal_regression.summary
+        assert 'p' in ordinal_regression.summary
+        assert 'lower 0.95' in ordinal_regression.summary
+        assert 'upper 0.95' in ordinal_regression.summary

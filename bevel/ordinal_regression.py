@@ -6,7 +6,7 @@ from pandas import DataFrame
 from scipy import optimize
 from scipy.linalg import block_diag
 from scipy.stats import norm
-
+import pandas as pd
 
 
 def logistic(z):
@@ -20,8 +20,8 @@ def logistic(z):
 
 class OrdinalRegression():
 
-    def __init__(self):
-        pass
+    def __init__(self, alpha=0.95):
+        self.alpha = alpha
 
     def fit(self, X, y):
         X_data, y_data = self._clean(X, y)
@@ -31,7 +31,7 @@ class OrdinalRegression():
         bounds = [(None, None)] * (self.n_attributes + 1) + [(0, None)] * (self.n_classes - 2)
 
         optimization = optimize.minimize(
-            self._log_likelihood, 
+            self._log_likelihood,
             np.append(beta_guess, gamma_guess),
             args=(X_data, y_data),
             bounds=bounds
@@ -42,11 +42,23 @@ class OrdinalRegression():
         self.p_values_ = self._p_values()
         return self
 
+    @property
     def summary(self):
-        print('{:10} | {:13} | {:13}'.format('Attribute', 'Coefficient', 'p-value'))
-        for i in range(self.n_attributes):
-            attribute_name = self.attribute_names[i] or 'Column {}'.format(i)
-            print('{:10} | {:+10.10f} | {:+10.10f}'.format(attribute_name, self.beta_[i], self.p_values_[i]))
+        """Summary statistics describing the fit.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Contains columns coef, se(coef), p, lower, upper"""
+
+        alpha_std_normal = norm.ppf((1. + self.alpha) / 2.)
+        df = pd.DataFrame(index=self.attribute_names)
+        df['coef'] = self.beta_
+        df['se(coef)'] = self.se_[:self.n_attributes]
+        df['p'] = self.p_values_[:self.n_attributes]
+        df['lower %.2f' % self.alpha] = self.beta_ - alpha_std_normal * self.se_[:self.n_attributes]
+        df['upper %.2f' % self.alpha] = self.beta_ + alpha_std_normal * self.se_[:self.n_attributes]
+        return df
 
     def _clean(self, X, y):
         if type(X) == DataFrame:
