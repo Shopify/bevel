@@ -114,6 +114,7 @@ class OrdinalRegression():
         self.n_classes = len(y_values)
         y_range = np.arange(1, self.n_classes + 1)
         self.y_dict = dict(zip(y_values, y_range))
+        self.inverse_y_dict = dict(zip(y_range, y_values))
         y_data = np.vectorize(self.y_dict.get)(y_data)
 
         return X_data, y_data
@@ -154,3 +155,15 @@ class OrdinalRegression():
         z_magnitudes = np.abs(self._z_values())
         p_values = 1 - norm.cdf(z_magnitudes) + norm.cdf(-z_magnitudes)
         return p_values
+
+    def predict(self, X):
+        if X.ndim == 1:
+            X = X[None, :]
+
+        alpha = self.alpha_
+        alpha = np.insert(alpha, 0, -np.inf)
+        alpha = np.append(alpha, np.inf)
+        z = (alpha - np.dot(X, self.beta_[:, None]))
+        cumulative_dist = logistic(z)
+        raw_predictions = np.argmax(np.diff(cumulative_dist), axis=1) + 1
+        return np.vectorize(self.inverse_y_dict.get)(raw_predictions)
