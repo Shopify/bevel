@@ -23,7 +23,7 @@ ucla_data = pd.read_stata(filepath)
 
 @pytest.fixture
 def X_ucla():
-    return ucla_data[['pared', 'public', 'gpa']]
+    return ucla_data.drop("apply", axis=1)
 
 @pytest.fixture
 def y_ucla():
