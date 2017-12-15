@@ -41,7 +41,7 @@ class OrdinalRegression():
             method='L-BFGS-B',
             options={'maxfun': self.maxfun, 'maxiter': self.maxiter}
         )
-        
+
         if not optimization.success:
             warning_message = 'Likelihood maximization failed - ' + str(optimization.message, 'utf-8')
             warnings.warn(warning_message, RuntimeWarning)
@@ -103,7 +103,7 @@ class OrdinalRegression():
         return
 
     def _clean(self, X, y):
-        if type(X) == pd.DataFrame:
+        if isinstance(X, pd.DataFrame):
             self.attribute_names = X.columns.tolist()
 
         X_data = np.asarray(X)
