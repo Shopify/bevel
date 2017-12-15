@@ -157,6 +157,9 @@ class OrdinalRegression():
         return p_values
 
     def predict(self, X):
+        if X.ndim == 1:
+            X = X[None, :]
+
         alpha = self.alpha_
         alpha = np.insert(alpha, 0, -np.inf)
         alpha = np.append(alpha, np.inf)
