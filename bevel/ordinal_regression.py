@@ -165,6 +165,4 @@ class OrdinalRegression():
 
     @staticmethod
     def _bounded_alpha(alpha):
-        _alpha = np.insert(alpha, 0, -np.inf)
-        _alpha = np.append(_alpha, np.inf)
-        return _alpha
+        return np.concatenate(([-np.inf], alpha, [np.inf]))
