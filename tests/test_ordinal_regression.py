@@ -101,7 +101,7 @@ class TestOrdinalRegression():
         assert orf.n_classes == 3
 
     def test_summary(self, X_ucla, y_ucla):
-        orf = OrdinalRegression(alpha=0.95)
+        orf = OrdinalRegression(significance=0.95)
         orf.fit(X_ucla, y_ucla)
         assert 'coef' in orf.summary
         assert 'se(coef)' in orf.summary

@@ -21,8 +21,8 @@ def logistic(z):
 
 class OrdinalRegression():
 
-    def __init__(self, alpha=0.95, maxfun=100000, maxiter=100000):
-        self.alpha = alpha
+    def __init__(self, significance=0.95, maxfun=100000, maxiter=100000):
+        self.significance = significance
         self.maxfun = maxfun
         self.maxiter = maxiter
 
@@ -62,14 +62,14 @@ class OrdinalRegression():
             Contains columns coef, se(coef), p, lower, upper
         """
 
-        alpha_std_normal = norm.ppf((1. + self.alpha) / 2.)
+        significance_std_normal = norm.ppf((1. + self.significance) / 2.)
         df = pd.DataFrame(index=self.attribute_names)
         df['coef'] = self.beta_
         df['se(coef)'] = self.se_[:self.n_attributes]
         df['p'] = self.p_values_[:self.n_attributes]
-        conf_interval = alpha_std_normal * self.se_[:self.n_attributes]
-        df['lower %.2f' % self.alpha] = self.beta_ - conf_interval
-        df['upper %.2f' % self.alpha] = self.beta_ + conf_interval
+        conf_interval = significance_std_normal * self.se_[:self.n_attributes]
+        df['lower %.2f' % self.significance] = self.beta_ - conf_interval
+        df['upper %.2f' % self.significance] = self.beta_ + conf_interval
         return df
 
     def print_summary(self):
