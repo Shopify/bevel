@@ -65,7 +65,7 @@ class TestOrdinalRegression():
         expected_p_values_ = np.array([8.087e-05, 8.435e-01, 1.812e-02, 4.696e-03, 9.027e-08])
         assert_allclose(orf.p_values_, expected_p_values_, rtol=0.01)
 
-    def test_compute_jacobian(self):
+    def test_compute_basis_change(self):
         orf = OrdinalRegression()
         orf.n_attributes = 2
         orf.n_classes = 5
@@ -77,7 +77,7 @@ class TestOrdinalRegression():
             [0., 0., 1., 1., 1., 0.],
             [0., 0., 1., 1., 1., 1.]
         ])
-        assert_array_equal(expected, orf._compute_jacobian())
+        assert_array_equal(expected, orf._compute_basis_change())
 
     def test_log_likelihood(self):
         orf = OrdinalRegression()
@@ -89,11 +89,22 @@ class TestOrdinalRegression():
         expected = - 3.0 * np.log(0.5)
         assert actual == expected
 
+    def test_gradient(self):
+        orf = OrdinalRegression()
+        X = np.array([[1.0], [1.0], [1.0]])
+        y = np.array([1,1,2])
+        coefficients = np.array([1.0, 1.0])
+        orf.n_attributes = 1
+        orf.n_classes = 2
+        actual = orf._gradient(coefficients, X, y)
+        expected = np.array([0.5, -0.5])
+        assert_array_equal(actual, expected)
+
     def test_prepare(self):
         orf = OrdinalRegression()
         y = np.array([1,3,5])
-        expected = np.array([1,2,3])
         _, actual = orf._prepare(np.empty((1,1)), y)
+        expected = np.array([1,2,3])
         assert_array_equal(actual, expected)
         assert orf.attribute_names == ['column_0']
         assert orf.N == 1
