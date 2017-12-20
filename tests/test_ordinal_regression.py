@@ -145,3 +145,20 @@ class TestOrdinalRegression():
         orf.fit(X_ucla, y_ucla)
         X_pred = np.random.randn(X_ucla.shape[1])
         assert orf.predict_class(X_pred).shape[0] == 1
+
+    def test_score(self, X_ucla, y_ucla):
+        orf = OrdinalRegression()
+        beta = np.array([1.0, 0.5, -1.0])
+        x = np.array([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ])
+        orf.beta_ = beta
+        x_beta = x.dot(beta)
+        y = [1, 2, 3]
+        print(x_beta)
+
+
+        orf._compute_score()
+        assert False
