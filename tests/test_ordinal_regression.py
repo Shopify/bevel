@@ -124,17 +124,24 @@ class TestOrdinalRegression():
         y_ucla[y_ucla == 1] = -1
         orf = OrdinalRegression()
         orf.fit(X_ucla, y_ucla)
-        assert orf.predict(X_ucla).min() == -1
+        assert orf.predict_class(X_ucla).min() == -1
 
-    def test_predict_returns_correct_number_of_output_predictions(self, X_ucla, y_ucla):
+    def test_predict_class_returns_correct_number_of_output_predictions(self, X_ucla, y_ucla):
         orf = OrdinalRegression()
         orf.fit(X_ucla, y_ucla)
         n = 10
         X_pred = np.random.randn(n, X_ucla.shape[1])
-        assert orf.predict(X_pred).shape[0] == n
+        assert orf.predict_class(X_pred).shape[0] == n
+
+    def test_predict_probs_returns_correct_number_of_output_predictions(self, X_ucla, y_ucla):
+        orf = OrdinalRegression()
+        orf.fit(X_ucla, y_ucla)
+        n = 10
+        X_pred = np.random.randn(n, X_ucla.shape[1])
+        assert orf.predict_probabilities(X_pred).shape == (n, 3)
 
     def test_predict_can_accept_single_row(self, X_ucla, y_ucla):
         orf = OrdinalRegression()
         orf.fit(X_ucla, y_ucla)
         X_pred = np.random.randn(X_ucla.shape[1])
-        assert orf.predict(X_pred).shape[0] == 1
+        assert orf.predict_class(X_pred).shape[0] == 1
