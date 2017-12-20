@@ -51,7 +51,7 @@ class OrdinalRegression():
         self._set_coefficients(optimization.x)
         self.se_ = self._compute_standard_errors(X_data, y_data)
         self.p_values_ = self._compute_p_values()
-        self.score_ = self._score(X_data, y_data)
+        self.score_ = self._compute_score(X_data, y_data)
         return self
 
     @property
@@ -188,7 +188,7 @@ class OrdinalRegression():
         p_values = 1 - norm.cdf(z_magnitudes) + norm.cdf(-z_magnitudes)
         return p_values
 
-    def _score(self, X, y):
+    def _compute_score(self, X, y):
         x_beta = X.dot(self.beta_)
         return kendalltau(x_beta, y).correlation
 
