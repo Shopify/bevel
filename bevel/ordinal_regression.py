@@ -103,14 +103,18 @@ class OrdinalRegression():
               end='\n\n')
         return
 
-    def predict(self, X):
+    def predict_probabilities(self, X):
         if X.ndim == 1:
             X = X[None, :]
 
         bounded_alpha = self._bounded_alpha(self.alpha_)
         z = bounded_alpha - X.dot(self.beta_)[:, None]
         cumulative_dist = logistic(z)
-        raw_predictions = np.argmax(np.diff(cumulative_dist), axis=1) + 1
+        return np.diff(cumulative_dist)
+
+    def predict_class(self, X):
+        probs = self.predict_probabilities(X)
+        raw_predictions = np.argmax(probs, axis=1) + 1
         return np.vectorize(self.inverse_y_dict.get)(raw_predictions)
 
     def _prepare(self, X, y):
@@ -143,7 +147,7 @@ class OrdinalRegression():
         beta = coefficients[:self.n_attributes]
         gamma = coefficients[self.n_attributes:]
         bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
-        
+
         phi_plus = logistic(bounded_alpha[y_data] - X_data.dot(beta))
         phi_minus = logistic(bounded_alpha[y_data-1] - X_data.dot(beta))
         quotient_plus = phi_plus * (1 - phi_plus) / (phi_plus - phi_minus)
@@ -153,7 +157,7 @@ class OrdinalRegression():
 
         alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
         beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
-        
+
         return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
 
     def _set_coefficients(self, optimization_x):
