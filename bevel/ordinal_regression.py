@@ -7,6 +7,7 @@ from numpy.linalg import inv
 from scipy import optimize
 from scipy.linalg import block_diag
 from scipy.stats import norm
+from scipy.stats import kendalltau
 
 
 
@@ -50,6 +51,7 @@ class OrdinalRegression():
         self._set_coefficients(optimization.x)
         self.se_ = self._compute_standard_errors(X_data, y_data)
         self.p_values_ = self._compute_p_values()
+        self.score_ = self._compute_score(X_data, y_data)
         return self
 
     @property
@@ -101,6 +103,7 @@ class OrdinalRegression():
         print('---')
         print("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 ",
               end='\n\n')
+        print("Somers' D = {:.3f}".format(self.score_))
         return
 
     def predict_probabilities(self, X):
@@ -184,6 +187,10 @@ class OrdinalRegression():
         z_magnitudes = np.abs(self._compute_z_values())
         p_values = 1 - norm.cdf(z_magnitudes) + norm.cdf(-z_magnitudes)
         return p_values
+
+    def _compute_score(self, X, y):
+        x_beta = X.dot(self.beta_)
+        return kendalltau(x_beta, y).correlation
 
     @staticmethod
     def _bounded_alpha(alpha):

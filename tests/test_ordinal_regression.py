@@ -145,3 +145,35 @@ class TestOrdinalRegression():
         orf.fit(X_ucla, y_ucla)
         X_pred = np.random.randn(X_ucla.shape[1])
         assert orf.predict_class(X_pred).shape[0] == 1
+
+    def test_score(self, X_ucla, y_ucla):
+
+        def kendall(x, y):
+            import itertools
+
+            cc_count = 0.
+            dc_count = 0.
+            count = 0.
+            for (x1, y1), (x2, y2) in itertools.combinations(zip(y, x_beta), 2):
+                if (x1 > x2 and y1 > y2) or (x1 < x2 and y1 < y2):
+                    cc_count += 1
+                elif (x1 == x2) or (y1 == y2):
+                    pass
+                else:
+                    dc_count += 1
+                count += 1
+
+            return (cc_count - dc_count) / count
+
+        beta = np.array([1.0, 0.5, -1.0])
+        X = np.array([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 2.0, 1.0],
+        ])
+        x_beta = X.dot(beta)
+        y = [1, 2, 3]
+
+        orf = OrdinalRegression()
+        orf.beta_ = beta
+        assert orf._compute_score(X, y) == kendall(x_beta, y)
