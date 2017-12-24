@@ -69,7 +69,7 @@ class TestOrdinalRegression():
         orf = OrdinalRegression()
         orf.n_attributes = 2
         orf.n_classes = 5
-        expected = np.array([
+        expected_P = np.array([
             [1., 0., 0., 0., 0., 0.],
             [0., 1., 0., 0., 0., 0.],
             [0., 0., 1., 0., 0., 0.],
@@ -77,7 +77,7 @@ class TestOrdinalRegression():
             [0., 0., 1., 1., 1., 0.],
             [0., 0., 1., 1., 1., 1.]
         ])
-        assert_array_equal(expected, orf._compute_basis_change())
+        assert_array_equal(expected_P, orf._compute_basis_change())
 
     def test_log_likelihood(self):
         orf = OrdinalRegression()
@@ -85,9 +85,7 @@ class TestOrdinalRegression():
         y = np.array([1,1,2])
         coefficients = np.array([1.0, 1.0])
         orf.n_attributes = 1
-        actual = orf._log_likelihood(coefficients, X, y)
-        expected = - 3.0 * np.log(0.5)
-        assert actual == expected
+        assert orf._log_likelihood(coefficients, X, y) == - 3.0 * np.log(0.5)
 
     def test_gradient(self):
         orf = OrdinalRegression()
@@ -100,16 +98,31 @@ class TestOrdinalRegression():
         expected = np.array([0.5, -0.5])
         assert_array_equal(actual, expected)
 
-    def test_prepare(self):
+    def test_prepare_y(self):
         orf = OrdinalRegression()
         y = np.array([1,3,5])
-        _, actual = orf._prepare(np.empty((1,1)), y)
-        expected = np.array([1,2,3])
-        assert_array_equal(actual, expected)
-        assert orf.attribute_names == ['column_0']
-        assert orf.N == 1
-        assert orf.n_attributes == 1
+        y_data = orf._prepare_y(y)
+        assert_array_equal(y_data, np.array([1,2,3]))
         assert orf.n_classes == 3
+
+    def test_prepare_X(self):
+        orf = OrdinalRegression()
+        X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
+        X_data, X_std = orf._prepare_X(X)
+        assert_array_equal(X_data, X / 2.0)
+        assert_array_equal(X_std, np.array([2, 2, 2]))
+        assert orf.N == 5
+        assert orf.n_attributes == 3
+
+    def test_get_column_names_df(self):
+        X = pd.DataFrame(columns=['a', 'b'])
+        assert OrdinalRegression()._get_column_names(X) == ['a', 'b']
+
+    def test_get_column_names_array(self):
+        X = np.array(None)
+        orf = OrdinalRegression()
+        orf.n_attributes = 2
+        assert orf._get_column_names(X) == ['column_1', 'column_2']
 
     def test_summary(self, X_ucla, y_ucla):
         orf = OrdinalRegression(significance=0.95)
