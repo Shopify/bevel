@@ -11,6 +11,7 @@ from scipy.stats import kendalltau
 
 
 
+
 def logistic(z):
     positive_z = z > 0
     logistic = np.zeros_like(z, dtype=np.float)
@@ -28,7 +29,8 @@ class OrdinalRegression():
         self.maxiter = maxiter
 
     def fit(self, X, y):
-        X_data, y_data = self._prepare(X, y)
+        X_data, X_std = self._prepare_X(X)
+        y_data = self._prepare_y(y)
 
         beta_guess = np.zeros(self.n_attributes)
         gamma_guess = np.ones(self.n_classes - 1)
@@ -48,10 +50,16 @@ class OrdinalRegression():
             warning_message = 'Likelihood maximization failed - ' + str(optimization.message, 'utf-8')
             warnings.warn(warning_message, RuntimeWarning)
 
-        self._set_coefficients(optimization.x)
-        self.se_ = self._compute_standard_errors(X_data, y_data)
+        self.se_ = self._compute_standard_errors(optimization.x, X_data, y_data)
+        self.se_[:self.n_attributes] = self.se_[:self.n_attributes] / X_std
+        
+        self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
+        self.beta_ = optimization.x[:self.n_attributes] / X_std
+        
+        self.coef_ = np.append(self.beta_, self.alpha_)
         self.p_values_ = self._compute_p_values()
         self.score_ = self._compute_score(X_data, y_data)
+
         return self
 
     @property
@@ -67,12 +75,15 @@ class OrdinalRegression():
 
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
         df = pd.DataFrame(index=self.attribute_names)
+        
         df['coef'] = self.beta_
         df['se(coef)'] = self.se_[:self.n_attributes]
         df['p'] = self.p_values_[:self.n_attributes]
+        
         conf_interval = significance_std_normal * self.se_[:self.n_attributes]
         df['lower %.2f' % self.significance] = self.beta_ - conf_interval
         df['upper %.2f' % self.significance] = self.beta_ + conf_interval
+        
         return df
 
     def print_summary(self):
@@ -118,7 +129,7 @@ class OrdinalRegression():
     def predict_class(self, X):
         probs = self.predict_probabilities(X)
         raw_predictions = np.argmax(probs, axis=1) + 1
-        return np.vectorize(self.inverse_y_dict.get)(raw_predictions)
+        return np.vectorize(self._y_dict.get)(raw_predictions)
 
     def _prepare(self, X, y):
         X_data = np.asarray(X)
@@ -128,15 +139,30 @@ class OrdinalRegression():
         else:
             self.attribute_names = ['column_' + str(i) for i in range(self.n_attributes)]
 
+    def _prepare_X(self, X):
+        X_data = np.asarray(X)
+        self.N, self.n_attributes = X_data.shape
+        self.attribute_names = self._get_column_names(X)
+        
+        X_std = X_data.std(0)
+        X_std[X_std == 0] = 1
+        
+        return X_data / X_std, X_std
+
+    def _prepare_y(self, y):
         y_data = np.asarray(y).astype(np.int)
         y_values = np.sort(np.unique(y_data))
+        
         self.n_classes = len(y_values)
         y_range = np.arange(1, self.n_classes + 1)
-        self.y_dict = dict(zip(y_values, y_range))
-        self.inverse_y_dict = dict(zip(y_range, y_values))
-        y_data = np.vectorize(self.y_dict.get)(y_data)
+        self._y_dict = dict(zip(y_range, y_values))
+        
+        return np.vectorize(dict(zip(y_values, y_range)).get)(y_data)
 
-        return X_data, y_data
+    def _get_column_names(self, X):
+        if isinstance(X, pd.DataFrame):
+            return X.columns.tolist()
+        return ['column_' + str(i+1) for i in range(self.n_attributes)]
 
     def _log_likelihood(self, coefficients, X_data, y_data):
         beta = coefficients[:self.n_attributes]
@@ -169,9 +195,9 @@ class OrdinalRegression():
         self.alpha_ = np.cumsum(self.gamma_)
         self.coef_ = np.append(self.beta_, self.alpha_)
 
-    def _compute_standard_errors(self, X_data, y_data):
+    def _compute_standard_errors(self, coefficients, X_data, y_data):
         hessian_function = Jacobian(self._gradient, method='forward')
-        H = hessian_function(np.append(self.beta_, self.gamma_), X_data, y_data)
+        H = hessian_function(coefficients, X_data, y_data)
         P = self._compute_basis_change()
         return np.sqrt(np.diagonal(P.dot(inv(H)).dot(P.T)))
 
