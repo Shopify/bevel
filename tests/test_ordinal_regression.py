@@ -163,9 +163,9 @@ class TestOrdinalRegression():
 
     def test_predict_linear_product(self, X_ucla, y_ucla):
         orf = OrdinalRegression()
-        orf.fit(X_ucla, y_ucla)
-        assert max(orf.predict_linear_product(X_ucla)) > 3.41
-        assert min(orf.predict_linear_product(X_ucla)) < 1.17
+        orf.beta_ = np.array([1, -1, 2])
+        assert orf.predict_linear_product(np.ones(3)) == 1 + -1 + 2
+        assert orf.predict_linear_product(np.array([1, 0, 1.5])) == 1*1 + -1*0 + 2*1.5
 
     def test_score(self, X_ucla, y_ucla):
 
