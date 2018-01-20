@@ -52,10 +52,10 @@ class OrdinalRegression():
 
         self.se_ = self._compute_standard_errors(optimization.x, X_data, y_data)
         self.se_[:self.n_attributes] = self.se_[:self.n_attributes] / X_std
-        
+
         self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
         self.beta_ = optimization.x[:self.n_attributes] / X_std
-        
+
         self.coef_ = np.append(self.beta_, self.alpha_)
         self.p_values_ = self._compute_p_values()
         self.score_ = self._compute_score(X_data, y_data)
@@ -75,15 +75,15 @@ class OrdinalRegression():
 
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
         df = pd.DataFrame(index=self.attribute_names)
-        
+
         df['coef'] = self.beta_
         df['se(coef)'] = self.se_[:self.n_attributes]
         df['p'] = self.p_values_[:self.n_attributes]
-        
+
         conf_interval = significance_std_normal * self.se_[:self.n_attributes]
         df['lower %.2f' % self.significance] = self.beta_ - conf_interval
         df['upper %.2f' % self.significance] = self.beta_ + conf_interval
-        
+
         return df
 
     def print_summary(self):
@@ -118,11 +118,8 @@ class OrdinalRegression():
         return
 
     def predict_probabilities(self, X):
-        if X.ndim == 1:
-            X = X[None, :]
-
         bounded_alpha = self._bounded_alpha(self.alpha_)
-        z = bounded_alpha - X.dot(self.beta_)[:, None]
+        z = bounded_alpha - self.predict_linear_product(X)
         cumulative_dist = logistic(z)
         return np.diff(cumulative_dist)
 
@@ -130,6 +127,11 @@ class OrdinalRegression():
         probs = self.predict_probabilities(X)
         raw_predictions = np.argmax(probs, axis=1) + 1
         return np.vectorize(self._y_dict.get)(raw_predictions)
+
+    def predict_linear_product(self, X):
+        if X.ndim == 1:
+            X = X[None, :]
+        return X.dot(self.beta_)[:, None]
 
     def _prepare(self, X, y):
         X_data = np.asarray(X)
@@ -143,20 +145,20 @@ class OrdinalRegression():
         X_data = np.asarray(X)
         self.N, self.n_attributes = X_data.shape
         self.attribute_names = self._get_column_names(X)
-        
+
         X_std = X_data.std(0)
         X_std[X_std == 0] = 1
-        
+
         return X_data / X_std, X_std
 
     def _prepare_y(self, y):
         y_data = np.asarray(y).astype(np.int)
         y_values = np.sort(np.unique(y_data))
-        
+
         self.n_classes = len(y_values)
         y_range = np.arange(1, self.n_classes + 1)
         self._y_dict = dict(zip(y_range, y_values))
-        
+
         return np.vectorize(dict(zip(y_values, y_range)).get)(y_data)
 
     def _get_column_names(self, X):

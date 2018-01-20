@@ -158,6 +158,14 @@ class TestOrdinalRegression():
         orf.fit(X_ucla, y_ucla)
         X_pred = np.random.randn(X_ucla.shape[1])
         assert orf.predict_class(X_pred).shape[0] == 1
+        assert orf.predict_linear_product(X_pred).shape[0] == 1
+        assert orf.predict_probabilities(X_pred).shape[0] == 1
+
+    def test_predict_linear_product(self, X_ucla, y_ucla):
+        orf = OrdinalRegression()
+        orf.beta_ = np.array([1, -1, 2])
+        assert orf.predict_linear_product(np.ones(3)) == 1 + -1 + 2
+        assert orf.predict_linear_product(np.array([1, 0, 1.5])) == 1*1 + -1*0 + 2*1.5
 
     def test_score(self, X_ucla, y_ucla):
 
