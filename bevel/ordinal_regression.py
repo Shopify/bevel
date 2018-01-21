@@ -8,17 +8,12 @@ from scipy import optimize
 from scipy.linalg import block_diag
 from scipy.stats import norm
 from scipy.stats import kendalltau
-
+from scipy.special import expit
 
 
 
 def logistic(z):
-    positive_z = z > 0
-    logistic = np.zeros_like(z, dtype=np.float)
-    logistic[positive_z] = 1.0 / (1 + np.exp(-z[positive_z]))
-    exp_z = np.exp(z[~positive_z])
-    logistic[~positive_z] = exp_z / (1.0 + exp_z)
-    return logistic
+    return expit(z)
 
 
 class OrdinalRegression():
