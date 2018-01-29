@@ -40,11 +40,11 @@ class OrdinalRegression():
         log likelihood function.
 
         Parameters:
-        X: a pandas DataFrame or numpy array of numerical regressors 
-        y: a column of ordinal-valued data 
+          X: a pandas DataFrame or numpy array of numerical regressors 
+          y: a column of ordinal-valued data 
         
         Returns:
-        self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined 
+          self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined 
         """
         
         X_data, X_scale, X_mean, X_std = self._prepare_X(X)
@@ -85,8 +85,8 @@ class OrdinalRegression():
         """
         Summary statistics describing the fit.
 
-        Returns
-          df : a pandas DataFrame with columns coef, se(coef), p, lower, upper
+        Returns:
+          df: a pandas DataFrame with columns coef, se(coef), p, lower, upper
         """
 
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
@@ -172,7 +172,7 @@ class OrdinalRegression():
           X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
 
         Returns:
-          classes: a numpy array with the predicted linear product score for each input
+          linear_products: a numpy array with the predicted linear product score for each input
         """
 
         if X.ndim == 1:
