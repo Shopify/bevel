@@ -108,11 +108,19 @@ class TestOrdinalRegression():
     def test_prepare_X(self):
         orf = OrdinalRegression()
         X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
-        X_data, X_std = orf._prepare_X(X)
-        assert_array_equal(X_data, X / 2.0)
+        X_data, X_scale, X_mean, X_std = orf._prepare_X(X)
+        assert_array_equal(X_data, X)
+        assert_array_equal(X_scale, X / 2.0)
+        assert_array_equal(X_mean, np.array([0, 0, 0]))
         assert_array_equal(X_std, np.array([2, 2, 2]))
         assert orf.N == 5
         assert orf.n_attributes == 3
+
+    def test_vanishing_variance_raises_error(self):
+        orf = OrdinalRegression()
+        X = np.array([[1,1], [1,2], [1,3]])
+        with pytest.raises(ValueError):
+            X_data, X_scale, X_mean, X_std = orf._prepare_X(X)
 
     def test_get_column_names_df(self):
         X = pd.DataFrame(columns=['a', 'b'])

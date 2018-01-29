@@ -17,6 +17,17 @@ def logistic(z):
 
 
 class OrdinalRegression():
+    """
+    This class implements ordinal logistic regression fitting. The link function in this
+    case is the logistic function and the cumulative distribution is parameterized as follows
+
+    P(Y < p | X_i) = 1 / 1 + exp(X_i.beta - alpha_p)
+
+    Parameters:
+      significance: the significance of confidence levels reported in the fit summary
+      maxfun: the maximum number of function calls used by scipy.optimize()
+      maxiter: the maximum number of iterations used by scipy.optimize()
+    """
 
     def __init__(self, significance=0.95, maxfun=100000, maxiter=100000):
         self.significance = significance
@@ -24,7 +35,19 @@ class OrdinalRegression():
         self.maxiter = maxiter
 
     def fit(self, X, y):
-        X_data, X_std = self._prepare_X(X)
+        """
+        Fit the ordinal logistic regression model to the input data by maximizing the
+        log likelihood function.
+
+        Parameters:
+        X: a pandas DataFrame or numpy array of numerical regressors 
+        y: a column of ordinal-valued data 
+        
+        Returns:
+        self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined 
+        """
+        
+        X_data, X_scale, X_mean, X_std = self._prepare_X(X)
         y_data = self._prepare_y(y)
 
         beta_guess = np.zeros(self.n_attributes)
@@ -35,7 +58,7 @@ class OrdinalRegression():
             self._log_likelihood,
             np.append(beta_guess, gamma_guess),
             jac=self._gradient,
-            args=(X_data, y_data),
+            args=(X_scale, y_data),
             bounds=bounds,
             method='L-BFGS-B',
             options={'maxfun': self.maxfun, 'maxiter': self.maxiter}
@@ -45,13 +68,13 @@ class OrdinalRegression():
             warning_message = 'Likelihood maximization failed - ' + str(optimization.message, 'utf-8')
             warnings.warn(warning_message, RuntimeWarning)
 
-        self.se_ = self._compute_standard_errors(optimization.x, X_data, y_data)
-        self.se_[:self.n_attributes] = self.se_[:self.n_attributes] / X_std
-
-        self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
         self.beta_ = optimization.x[:self.n_attributes] / X_std
-
+        gamma = optimization.x[self.n_attributes:]
+        gamma[0] = gamma[0] + X_mean.dot(self.beta_)
+        self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
         self.coef_ = np.append(self.beta_, self.alpha_)
+        
+        self.se_ = self._compute_standard_errors(np.append(self.beta_, gamma), X_data, y_data)
         self.p_values_ = self._compute_p_values()
         self.score_ = self._compute_score(X_data, y_data)
 
@@ -63,9 +86,7 @@ class OrdinalRegression():
         Summary statistics describing the fit.
 
         Returns
-        -------
-        df : pd.DataFrame
-            Contains columns coef, se(coef), p, lower, upper
+          df : a pandas DataFrame with columns coef, se(coef), p, lower, upper
         """
 
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
@@ -84,8 +105,8 @@ class OrdinalRegression():
     def print_summary(self):
         """
         Print summary statistics describing the fit.
-
         """
+        
         def significance_code(p):
             if p < 0.001:
                 return '***'
@@ -113,17 +134,47 @@ class OrdinalRegression():
         return
 
     def predict_probabilities(self, X):
+        """
+        Predict the probability of input variables belonging to each ordinal class
+
+        Parameters:
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
+
+        Returns:
+          probabilities: a numpy array with n_classes columns listing the probability of belonging to each class
+        """
+        
         bounded_alpha = self._bounded_alpha(self.alpha_)
         z = bounded_alpha - self.predict_linear_product(X)
         cumulative_dist = logistic(z)
         return np.diff(cumulative_dist)
 
     def predict_class(self, X):
+        """
+        Predict the most likely class for a set of input variables
+
+        Parameters:
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
+
+        Returns:
+          classes: a numpy array with the predicted most likely class for each input
+        """
+        
         probs = self.predict_probabilities(X)
         raw_predictions = np.argmax(probs, axis=1) + 1
         return np.vectorize(self._y_dict.get)(raw_predictions)
 
     def predict_linear_product(self, X):
+        """
+        Predict the linear product score X.beta for a set of input variables
+
+        Parameters:
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
+
+        Returns:
+          classes: a numpy array with the predicted linear product score for each input
+        """
+
         if X.ndim == 1:
             X = X[None, :]
         return X.dot(self.beta_)[:, None]
@@ -142,9 +193,12 @@ class OrdinalRegression():
         self.attribute_names = self._get_column_names(X)
 
         X_std = X_data.std(0)
-        X_std[X_std == 0] = 1
+        X_mean = X_data.mean(0)
+        
+        if any(X_std == 0):
+            raise ValueError('one of the regressors has 0 variance.')
 
-        return X_data / X_std, X_std
+        return X_data, (X_data - X_mean) / X_std, X_mean, X_std
 
     def _prepare_y(self, y):
         y_data = np.asarray(y).astype(np.int)
