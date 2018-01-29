@@ -120,7 +120,7 @@ class TestOrdinalRegression():
         orf = OrdinalRegression()
         X = np.array([[1,1], [1,2], [1,3]])
         with pytest.raises(ValueError):
-            X_data, X_scale, X_mean, X_std = orf._prepare_X(X)
+            orf._prepare_X(X)
 
     def test_get_column_names_df(self):
         X = pd.DataFrame(columns=['a', 'b'])
