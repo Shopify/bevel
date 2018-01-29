@@ -71,7 +71,7 @@ class OrdinalRegression():
         self.beta_ = optimization.x[:self.n_attributes] / X_std
         gamma = optimization.x[self.n_attributes:]
         gamma[0] = gamma[0] + X_mean.dot(self.beta_)
-        self.alpha_ = np.cumsum(optimization.x[self.n_attributes:])
+        self.alpha_ = np.cumsum(gamma)
         self.coef_ = np.append(self.beta_, self.alpha_)
         
         self.se_ = self._compute_standard_errors(np.append(self.beta_, gamma), X_data, y_data)
@@ -86,7 +86,7 @@ class OrdinalRegression():
         Summary statistics describing the fit.
 
         Returns:
-          df: a pandas DataFrame with columns coef, se(coef), p, lower, upper
+          a pandas DataFrame with columns coef, se(coef), p, lower, upper
         """
 
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
@@ -138,10 +138,10 @@ class OrdinalRegression():
         Predict the probability of input variables belonging to each ordinal class
 
         Parameters:
-          X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per input
 
         Returns:
-          probabilities: a numpy array with n_classes columns listing the probability of belonging to each class
+          a numpy array with n_classes columns listing the probability of belonging to each class
         """
         
         bounded_alpha = self._bounded_alpha(self.alpha_)
@@ -154,10 +154,10 @@ class OrdinalRegression():
         Predict the most likely class for a set of input variables
 
         Parameters:
-          X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per input
 
         Returns:
-          classes: a numpy array with the predicted most likely class for each input
+          a numpy array with the predicted most likely class for each input
         """
         
         probs = self.predict_probabilities(X)
@@ -169,10 +169,10 @@ class OrdinalRegression():
         Predict the linear product score X.beta for a set of input variables
 
         Parameters:
-          X: a pandas DataFrame or numpy array of inputs to predict, one row per iput
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per input
 
         Returns:
-          linear_products: a numpy array with the predicted linear product score for each input
+          a numpy array with the predicted linear product score for each input
         """
 
         if X.ndim == 1:
