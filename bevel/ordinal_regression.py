@@ -230,7 +230,7 @@ class OrdinalRegression():
         
         #the only way the denominator can vanish is if the numerator also vanishes
         #so we can safely overwrite any division by zero that arises numerically
-        denominator[denominator==0] = 1
+        denominator[denominator == 0] = 1
 
         quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
         quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
