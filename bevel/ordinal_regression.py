@@ -26,7 +26,9 @@ class OrdinalRegression():
     Parameters:
       significance: the significance of confidence levels reported in the fit summary
     """
-        
+
+    def __init__(self, significance=0.95):
+        self.significance = significance        
 
     def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
