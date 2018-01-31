@@ -25,18 +25,10 @@ class OrdinalRegression():
 
     Parameters:
       significance: the significance of confidence levels reported in the fit summary
-      maxfun: the maximum number of function calls used by scipy.optimize()
-      maxiter: the maximum number of iterations used by scipy.optimize()
-      epsilon: the minimum difference between successive intercepts, alpha_{p+1} - alpha_p
     """
+        
 
-    def __init__(self, significance=0.95, maxfun=100000, maxiter=100000, epsilon=10E-9):
-        self.significance = significance
-        self.maxfun = maxfun
-        self.maxiter = maxiter
-        self.epsilon = epsilon
-
-    def fit(self, X, y):
+    def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
         Fit the ordinal logistic regression model to the input data by maximizing the
         log likelihood function.
@@ -44,7 +36,10 @@ class OrdinalRegression():
         Parameters:
           X: a pandas DataFrame or numpy array of numerical regressors 
           y: a column of ordinal-valued data 
-        
+          maxfun: the maximum number of function calls used by scipy.optimize()
+          maxiter: the maximum number of iterations used by scipy.optimize()
+          epsilon: the minimum difference between successive intercepts, alpha_{p+1} - alpha_p
+
         Returns:
           self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined 
         """
@@ -54,7 +49,7 @@ class OrdinalRegression():
 
         beta_guess = np.zeros(self.n_attributes)
         gamma_guess = np.ones(self.n_classes - 1)
-        bounds = [(None, None)] * (self.n_attributes + 1) + [(self.epsilon, None)] * (self.n_classes - 2)
+        bounds = [(None, None)] * (self.n_attributes + 1) + [(epsilon, None)] * (self.n_classes - 2)
 
         optimization = optimize.minimize(
             self._log_likelihood,
@@ -63,7 +58,7 @@ class OrdinalRegression():
             args=(X_scale, y_data),
             bounds=bounds,
             method='L-BFGS-B',
-            options={'maxfun': self.maxfun, 'maxiter': self.maxiter}
+            options={'maxfun': maxfun, 'maxiter': maxiter}
         )
 
         if not optimization.success:
