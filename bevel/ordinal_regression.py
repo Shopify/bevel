@@ -227,8 +227,13 @@ class OrdinalRegression():
         phi_plus = logistic(bounded_alpha[y_data] - X_data.dot(beta))
         phi_minus = logistic(bounded_alpha[y_data-1] - X_data.dot(beta))
         denominator = phi_plus - phi_minus
-        quotient_plus = phi_plus * (1 - phi_plus) / denominator
-        quotient_minus = phi_minus * (1 - phi_minus) / denominator
+        
+        #the only way the denominator can vanish is if the numerator also vanishes
+        #so we can safely overwrite any division by zero that arises numerically
+        denominator[denominator==0] = 1
+
+        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
+        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
         indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
         indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
 
