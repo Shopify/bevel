@@ -25,16 +25,12 @@ class OrdinalRegression():
 
     Parameters:
       significance: the significance of confidence levels reported in the fit summary
-      maxfun: the maximum number of function calls used by scipy.optimize()
-      maxiter: the maximum number of iterations used by scipy.optimize()
     """
 
-    def __init__(self, significance=0.95, maxfun=100000, maxiter=100000):
-        self.significance = significance
-        self.maxfun = maxfun
-        self.maxiter = maxiter
+    def __init__(self, significance=0.95):
+        self.significance = significance        
 
-    def fit(self, X, y):
+    def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
         Fit the ordinal logistic regression model to the input data by maximizing the
         log likelihood function.
@@ -42,7 +38,10 @@ class OrdinalRegression():
         Parameters:
           X: a pandas DataFrame or numpy array of numerical regressors 
           y: a column of ordinal-valued data 
-        
+          maxfun: the maximum number of function calls used by scipy.optimize()
+          maxiter: the maximum number of iterations used by scipy.optimize()
+          epsilon: the minimum difference between successive intercepts, alpha_{p+1} - alpha_p
+
         Returns:
           self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined 
         """
@@ -52,7 +51,7 @@ class OrdinalRegression():
 
         beta_guess = np.zeros(self.n_attributes)
         gamma_guess = np.ones(self.n_classes - 1)
-        bounds = [(None, None)] * (self.n_attributes + 1) + [(0, None)] * (self.n_classes - 2)
+        bounds = [(None, None)] * (self.n_attributes + 1) + [(epsilon, None)] * (self.n_classes - 2)
 
         optimization = optimize.minimize(
             self._log_likelihood,
@@ -61,7 +60,7 @@ class OrdinalRegression():
             args=(X_scale, y_data),
             bounds=bounds,
             method='L-BFGS-B',
-            options={'maxfun': self.maxfun, 'maxiter': self.maxiter}
+            options={'maxfun': maxfun, 'maxiter': maxiter}
         )
 
         if not optimization.success:
@@ -90,7 +89,7 @@ class OrdinalRegression():
         """
 
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
-        df = pd.DataFrame(index=self.attribute_names)
+        df = self.attribute_names.set_index('attribute names')
 
         df['coef'] = self.beta_
         df['se(coef)'] = self.se_[:self.n_attributes]
@@ -179,14 +178,6 @@ class OrdinalRegression():
             X = X[None, :]
         return X.dot(self.beta_)[:, None]
 
-    def _prepare(self, X, y):
-        X_data = np.asarray(X)
-        self.N, self.n_attributes = X_data.shape
-        if isinstance(X, pd.DataFrame):
-            self.attribute_names = X.columns.tolist()
-        else:
-            self.attribute_names = ['column_' + str(i) for i in range(self.n_attributes)]
-
     def _prepare_X(self, X):
         X_data = np.asarray(X)
         self.N, self.n_attributes = X_data.shape
@@ -195,8 +186,11 @@ class OrdinalRegression():
         X_std = X_data.std(0)
         X_mean = X_data.mean(0)
         
-        if any(X_std == 0):
-            raise ValueError('one of the regressors has 0 variance.')
+        trivial_X = X_std == 0
+        if any(trivial_X):
+            raise ValueError(
+                'The regressors {} have 0 variance.'.format(self.attribute_names[trivial_X].values)
+            )
 
         return X_data, (X_data - X_mean) / X_std, X_mean, X_std
 
@@ -212,8 +206,10 @@ class OrdinalRegression():
 
     def _get_column_names(self, X):
         if isinstance(X, pd.DataFrame):
-            return X.columns.tolist()
-        return ['column_' + str(i+1) for i in range(self.n_attributes)]
+            column_names = X.columns.tolist()
+        else:
+            column_names = ['column_' + str(i+1) for i in range(self.n_attributes)]
+        return pd.DataFrame(column_names, columns=['attribute names'])
 
     def _log_likelihood(self, coefficients, X_data, y_data):
         beta = coefficients[:self.n_attributes]
@@ -230,8 +226,9 @@ class OrdinalRegression():
 
         phi_plus = logistic(bounded_alpha[y_data] - X_data.dot(beta))
         phi_minus = logistic(bounded_alpha[y_data-1] - X_data.dot(beta))
-        quotient_plus = phi_plus * (1 - phi_plus) / (phi_plus - phi_minus)
-        quotient_minus = phi_minus * (1 - phi_minus) / (phi_plus - phi_minus)
+        denominator = phi_plus - phi_minus
+        quotient_plus = phi_plus * (1 - phi_plus) / denominator
+        quotient_minus = phi_minus * (1 - phi_minus) / denominator
         indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
         indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
 

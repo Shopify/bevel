@@ -8,6 +8,8 @@ from bevel.ordinal_regression import OrdinalRegression
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
+from pandas.testing import assert_frame_equal
+
 from scipy import stats
 
 
@@ -124,13 +126,15 @@ class TestOrdinalRegression():
 
     def test_get_column_names_df(self):
         X = pd.DataFrame(columns=['a', 'b'])
-        assert OrdinalRegression()._get_column_names(X) == ['a', 'b']
+        expected = pd.DataFrame(['a', 'b'], columns=['attribute names'])
+        assert_frame_equal(OrdinalRegression()._get_column_names(X), expected)
 
     def test_get_column_names_array(self):
         X = np.array(None)
         orf = OrdinalRegression()
         orf.n_attributes = 2
-        assert orf._get_column_names(X) == ['column_1', 'column_2']
+        expected = pd.DataFrame(['column_1', 'column_2'], columns=['attribute names'])
+        assert_frame_equal(orf._get_column_names(X), expected)
 
     def test_summary(self, X_ucla, y_ucla):
         orf = OrdinalRegression(significance=0.95)
