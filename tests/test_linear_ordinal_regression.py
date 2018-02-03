@@ -43,7 +43,10 @@ def sample_lor():
     lor.n_classes = 3
     lor.se_ = np.array([1, 1, 1, 1, 1])
     lor.p_values_ = np.array([0, 0, 0, 0, 0])
-    lor.attribute_names = pd.DataFrame(['attribute_1', 'attribute_2', 'attribute_3'], columns=['attribute names'])
+    lor.attribute_names = pd.DataFrame(
+        ['attribute_1', 'attribute_2', 'attribute_3'], 
+        columns=['attribute names']
+    )
     return lor
 
 class TestLinearOrdinalRegression():
@@ -126,7 +129,7 @@ class TestLinearOrdinalRegression():
         assert lor.predict_linear_product(np.ones(3)) == 1 + -1 + 2
         assert lor.predict_linear_product(np.array([1, 0, 1.5])) == 1*1 + -1*0 + 2*1.5
 
-    def test_predict_probs_returns_correct_number_of_output_predictions(self, X_ucla, y_ucla, sample_lor):
+    def test_predict_probabilities_output_size(self, X_ucla, y_ucla, sample_lor):
         n = 10
         X_pred = np.random.randn(n, X_ucla.shape[1])
         assert sample_lor.predict_probabilities(X_pred).shape == (n, 3)
@@ -135,7 +138,7 @@ class TestLinearOrdinalRegression():
         X = np.array([[0, 0, 0], [1, 1, 1]])
         assert_array_equal(sample_lor.predict_class(X), np.array([1, 7]))
 
-    def test_predict_class_returns_correct_number_of_output_predictions(self, X_ucla, y_ucla, sample_lor):
+    def test_predict_class_output_size(self, X_ucla, y_ucla, sample_lor):
         n = 10
         X_pred = np.random.randn(n, X_ucla.shape[1])
         assert sample_lor.predict_class(X_pred).shape[0] == n

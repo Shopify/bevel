@@ -61,8 +61,8 @@ class LinearOrdinalRegression():
         )
 
         if not optimization.success:
-            warning_message = 'Likelihood maximization failed - ' + str(optimization.message, 'utf-8')
-            warnings.warn(warning_message, RuntimeWarning)
+            message = 'Likelihood maximization failed - ' + str(optimization.message, 'utf-8')
+            warnings.warn(message, RuntimeWarning)
 
         self.beta_ = optimization.x[:self.n_attributes] / X_std
         gamma = optimization.x[self.n_attributes:]
