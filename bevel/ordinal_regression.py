@@ -2,37 +2,34 @@ import numpy as np
 import pandas as pd
 import warnings
 
+from abc import abstractmethod
 from numdifftools import Jacobian
 from numpy.linalg import inv
 from scipy import optimize
 from scipy.linalg import block_diag
+from scipy.special import expit
 from scipy.stats import norm
 from scipy.stats import kendalltau
-from scipy.special import expit
 
 
-
-def logistic(z):
-    return expit(z)
-
-
-class OrdinalRegression():
+class LinearOrdinalRegression():
     """
-    This class implements ordinal logistic regression fitting. The link function in this
-    case is the logistic function and the cumulative distribution is parameterized as follows
+    An abstract class for linear ordinal regression fitting. The cumulative distribution
+    for probability of being classified into category p depends linearly on the regressors
+    through a link function Phi:
 
-    P(Y < p | X_i) = 1 / 1 + exp(X_i.beta - alpha_p)
+    P(Y < p | X_i) = Phi(alpha_p - X_i.beta)
 
-    Parameters:
-      significance: the significance of confidence levels reported in the fit summary
     """
 
-    def __init__(self, significance=0.95):
-        self.significance = significance        
+    @abstractmethod
+    def __init__(self, significance=0.95, link=None):
+        self.significance = significance
+        self.link = link
 
     def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
-        Fit the ordinal logistic regression model to the input data by maximizing the
+        Fit a linear ordinal regression model to the input data by maximizing the
         log likelihood function.
 
         Parameters:
@@ -71,13 +68,16 @@ class OrdinalRegression():
         gamma = optimization.x[self.n_attributes:]
         gamma[0] = gamma[0] + X_mean.dot(self.beta_)
         self.alpha_ = np.cumsum(gamma)
-        self.coef_ = np.append(self.beta_, self.alpha_)
         
         self.se_ = self._compute_standard_errors(np.append(self.beta_, gamma), X_data, y_data)
         self.p_values_ = self._compute_p_values()
         self.score_ = self._compute_score(X_data, y_data)
 
         return self
+
+    @property
+    def coef_(self):
+        return np.append(self.beta_, self.alpha_)
 
     @property
     def summary(self):
@@ -91,8 +91,8 @@ class OrdinalRegression():
         significance_std_normal = norm.ppf((1. + self.significance) / 2.)
         df = self.attribute_names.set_index('attribute names')
 
-        df['coef'] = self.beta_
-        df['se(coef)'] = self.se_[:self.n_attributes]
+        df['beta'] = self.beta_
+        df['se(beta)'] = self.se_[:self.n_attributes]
         df['p'] = self.p_values_[:self.n_attributes]
 
         conf_interval = significance_std_normal * self.se_[:self.n_attributes]
@@ -132,6 +132,21 @@ class OrdinalRegression():
         print("Somers' D = {:.3f}".format(self.score_))
         return
 
+    def predict_linear_product(self, X):
+        """
+        Predict the linear product score X.beta for a set of input variables
+
+        Parameters:
+          X: a pandas DataFrame or numpy array of inputs to predict, one row per input
+
+        Returns:
+          a numpy array with the predicted linear product score for each input
+        """
+
+        if X.ndim == 1:
+            X = X[None, :]
+        return X.dot(self.beta_)[:, None]
+
     def predict_probabilities(self, X):
         """
         Predict the probability of input variables belonging to each ordinal class
@@ -145,7 +160,7 @@ class OrdinalRegression():
         
         bounded_alpha = self._bounded_alpha(self.alpha_)
         z = bounded_alpha - self.predict_linear_product(X)
-        cumulative_dist = logistic(z)
+        cumulative_dist = self.link(z)
         return np.diff(cumulative_dist)
 
     def predict_class(self, X):
@@ -162,21 +177,6 @@ class OrdinalRegression():
         probs = self.predict_probabilities(X)
         raw_predictions = np.argmax(probs, axis=1) + 1
         return np.vectorize(self._y_dict.get)(raw_predictions)
-
-    def predict_linear_product(self, X):
-        """
-        Predict the linear product score X.beta for a set of input variables
-
-        Parameters:
-          X: a pandas DataFrame or numpy array of inputs to predict, one row per input
-
-        Returns:
-          a numpy array with the predicted linear product score for each input
-        """
-
-        if X.ndim == 1:
-            X = X[None, :]
-        return X.dot(self.beta_)[:, None]
 
     def _prepare_X(self, X):
         X_data = np.asarray(X)
@@ -217,36 +217,11 @@ class OrdinalRegression():
         bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
         z_plus = bounded_alpha[y_data] - X_data.dot(beta)
         z_minus = bounded_alpha[y_data-1] - X_data.dot(beta)
-        return - 1.0 * np.sum(np.log(logistic(z_plus) - logistic(z_minus)))
+        return - 1.0 * np.sum(np.log(self.link(z_plus) - self.link(z_minus)))
 
-    def _gradient(self, coefficients, X_data, y_data):
-        beta = coefficients[:self.n_attributes]
-        gamma = coefficients[self.n_attributes:]
-        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
-
-        phi_plus = logistic(bounded_alpha[y_data] - X_data.dot(beta))
-        phi_minus = logistic(bounded_alpha[y_data-1] - X_data.dot(beta))
-        denominator = phi_plus - phi_minus
-        
-        #the only way the denominator can vanish is if the numerator also vanishes
-        #so we can safely overwrite any division by zero that arises numerically
-        denominator[denominator == 0] = 1
-
-        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
-        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
-        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-
-        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
-        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
-
-        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
-
-    def _set_coefficients(self, optimization_x):
-        self.gamma_ = optimization_x[self.n_attributes:]
-        self.beta_ = optimization_x[:self.n_attributes]
-        self.alpha_ = np.cumsum(self.gamma_)
-        self.coef_ = np.append(self.beta_, self.alpha_)
+    @abstractmethod
+    def _gradient():
+        raise NotImplementedError()
 
     def _compute_standard_errors(self, coefficients, X_data, y_data):
         hessian_function = Jacobian(self._gradient, method='forward')
@@ -274,3 +249,79 @@ class OrdinalRegression():
     @staticmethod
     def _bounded_alpha(alpha):
         return np.concatenate(([-np.inf], alpha, [np.inf]))
+
+
+class OrderedLogit(LinearOrdinalRegression):
+    """
+    This class implements ordinal logistic regression fitting. The link function in this
+    case is the logistic function and the cumulative distribution is parameterized as follows:
+
+    P(Y < p | X_i) = 1 / 1 + exp(X_i.beta - alpha_p)
+
+    Parameters:
+      significance: the significance of confidence levels reported in the fit summary
+    """
+
+    def __init__(self, significance=0.95):
+        super().__init__(significance, expit)
+
+    def _gradient(self, coefficients, X_data, y_data):
+        beta = coefficients[:self.n_attributes]
+        gamma = coefficients[self.n_attributes:]
+        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
+
+        phi_plus = self.link(bounded_alpha[y_data] - X_data.dot(beta))
+        phi_minus = self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        denominator = phi_plus - phi_minus
+        
+        #the only way the denominator can vanish is if the numerator also vanishes
+        #so we can safely overwrite any division by zero that arises numerically
+        denominator[denominator == 0] = 1
+
+        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
+        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
+        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+
+        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
+        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
+
+        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
+
+
+class OrderedProbit(LinearOrdinalRegression):
+    """
+    This class implements ordered probit regression fitting. The link function in this
+    case is the logistic function and the cumulative distribution is parameterized as follows:
+
+    P(Y < p | X_i) = Probit(alpha_p - X_i.beta)
+
+    Parameters:
+      significance: the significance of confidence levels reported in the fit summary
+    """
+
+    def __init__(self, significance=0.95):
+        super().__init__(significance, norm.cdf)
+
+    def _gradient(self, coefficients, X_data, y_data):
+        beta = coefficients[:self.n_attributes]
+        gamma = coefficients[self.n_attributes:]
+        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
+
+        phi_plus = self.link(bounded_alpha[y_data] - X_data.dot(beta))
+        phi_minus = self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        denominator = phi_plus - phi_minus
+        
+        #the only way the denominator can vanish is if the numerator also vanishes
+        #so we can safely overwrite any division by zero that arises numerically
+        denominator[denominator == 0] = 1
+
+        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
+        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
+        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+
+        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
+        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
+
+        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())

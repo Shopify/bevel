@@ -1,1 +1,1 @@
-from .ordinal_regression import OrdinalRegression
+from .ordinal_regression import OrderedLogit
