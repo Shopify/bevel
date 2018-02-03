@@ -15,7 +15,7 @@ from scipy.stats import kendalltau
 class LinearOrdinalRegression():
     """
     An abstract class for linear ordinal regression fitting. The cumulative distribution
-    for probability of being classified into category p depends linearly on the regressors
+    for the probability of being classified into category p depends linearly on the regressors
     through a link function Phi:
 
     P(Y < p | X_i) = Phi(alpha_p - X_i.beta)
@@ -304,24 +304,4 @@ class OrderedProbit(LinearOrdinalRegression):
         super().__init__(significance, norm.cdf)
 
     def _gradient(self, coefficients, X_data, y_data):
-        beta = coefficients[:self.n_attributes]
-        gamma = coefficients[self.n_attributes:]
-        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
-
-        phi_plus = self.link(bounded_alpha[y_data] - X_data.dot(beta))
-        phi_minus = self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
-        denominator = phi_plus - phi_minus
-        
-        #the only way the denominator can vanish is if the numerator also vanishes
-        #so we can safely overwrite any division by zero that arises numerically
-        denominator[denominator == 0] = 1
-
-        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
-        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
-        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-
-        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
-        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
-
-        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
+        raise NotImplementedError()

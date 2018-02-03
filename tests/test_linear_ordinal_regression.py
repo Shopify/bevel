@@ -3,8 +3,8 @@ import os
 import pandas as pd
 import pytest
 
-from bevel.ordinal_regression import OrderedLogit
-from bevel.ordinal_regression import LinearOrdinalRegression
+from bevel.linear_ordinal_regression import OrderedLogit
+from bevel.linear_ordinal_regression import LinearOrdinalRegression
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 from scipy.special import expit
@@ -161,40 +161,40 @@ class TestLinearOrdinalRegression():
 class TestOrderedLogit():
 
     def test_ucla_coef(self, X_ucla, y_ucla):
-        orf = OrderedLogit()
-        orf.fit(X_ucla, y_ucla)
+        ol = OrderedLogit()
+        ol.fit(X_ucla, y_ucla)
         
         expected_coef_ = np.array([1.04769, -0.05879, 0.61594, 2.20391, 4.29936])
-        assert_allclose(orf.coef_, expected_coef_, rtol=0.01)
+        assert_allclose(ol.coef_, expected_coef_, rtol=0.01)
 
     def test_ucla_se(self, X_ucla, y_ucla):
-        orf = OrderedLogit()
-        orf.fit(X_ucla, y_ucla)
+        ol = OrderedLogit()
+        ol.fit(X_ucla, y_ucla)
         
         expected_se_ = np.array([0.2658, 0.2979, 0.2606, 0.7795, 0.8043])
-        assert_allclose(orf.se_, expected_se_, rtol=0.01)
+        assert_allclose(ol.se_, expected_se_, rtol=0.01)
 
     def test_ucla_z_values(self, X_ucla, y_ucla):
-        orf = OrderedLogit()
-        orf.fit(X_ucla, y_ucla)
+        ol = OrderedLogit()
+        ol.fit(X_ucla, y_ucla)
         
         expected_z_values_ = np.array([3.9418, -0.1974, 2.3632, 2.8272, 5.3453])
-        assert_allclose(orf._compute_z_values(), expected_z_values_, rtol=0.01)
+        assert_allclose(ol._compute_z_values(), expected_z_values_, rtol=0.01)
 
     def test_ucla_p_values(self, X_ucla, y_ucla):
-        orf = OrderedLogit()
-        orf.fit(X_ucla, y_ucla)
+        ol = OrderedLogit()
+        ol.fit(X_ucla, y_ucla)
 
         expected_p_values_ = np.array([8.087e-05, 8.435e-01, 1.812e-02, 4.696e-03, 9.027e-08])
-        assert_allclose(orf.p_values_, expected_p_values_, rtol=0.01)
+        assert_allclose(ol.p_values_, expected_p_values_, rtol=0.01)
 
     def test_gradient(self):
-        orf = OrderedLogit()
+        ol = OrderedLogit()
         X = np.array([[1.0], [1.0], [1.0]])
         y = np.array([1,1,2])
         coefficients = np.array([1.0, 1.0])
-        orf.n_attributes = 1
-        orf.n_classes = 2
+        ol.n_attributes = 1
+        ol.n_classes = 2
         
         expected = np.array([0.5, -0.5])
-        assert_array_equal(orf._gradient(coefficients, X, y), expected)
+        assert_array_equal(ol._gradient(coefficients, X, y), expected)

@@ -27,8 +27,9 @@ setup(
     license="MIT",
     keywords="oridinal regression statistics data analysis",
     url="https://github.com/ShopifyPeopleAnalytics/bevel",
-    packages=['bevel',
-              ],
+    packages=[
+        'bevel',
+        ],
     long_description=readme_rst,
     classifiers=[
         "Development Status :: 4 - Beta",
