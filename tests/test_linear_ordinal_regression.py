@@ -34,8 +34,7 @@ def y_ucla():
 
 @pytest.fixture
 def sample_lor():
-    lor = LinearOrdinalRegression(significance=0.9)
-    lor.link = expit
+    lor = LinearOrdinalRegression(expit, significance=0.9)
     lor.alpha_ = np.array([1, 1])
     lor.beta_ = np.array([1, 1, 1])
     lor._y_dict = {1:1, 2:2, 3:7}
@@ -52,7 +51,7 @@ def sample_lor():
 class TestLinearOrdinalRegression():
 
     def test_compute_basis_change(self):
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         lor.n_attributes = 2
         lor.n_classes = 5
         
@@ -67,7 +66,7 @@ class TestLinearOrdinalRegression():
         assert_array_equal(expected_P, lor._compute_basis_change())
 
     def test_prepare_y(self):
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         y = np.array([1,3,5])
         y_data = lor._prepare_y(y)
         
@@ -75,7 +74,7 @@ class TestLinearOrdinalRegression():
         assert lor.n_classes == 3
 
     def test_prepare_X(self):
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
         X_data, X_scale, X_mean, X_std = lor._prepare_X(X)
         
@@ -87,7 +86,7 @@ class TestLinearOrdinalRegression():
         assert lor.n_attributes == 3
 
     def test_vanishing_variance_raises_error(self):
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         X = np.array([[1,1], [1,2], [1,3]])
         with pytest.raises(ValueError):
             lor._prepare_X(X)
@@ -96,18 +95,18 @@ class TestLinearOrdinalRegression():
         X = pd.DataFrame(columns=['a', 'b'])
         
         expected = pd.DataFrame(['a', 'b'], columns=['attribute names'])
-        assert_frame_equal(LinearOrdinalRegression()._get_column_names(X), expected)
+        assert_frame_equal(LinearOrdinalRegression(None)._get_column_names(X), expected)
 
     def test_get_column_names_array(self):
         X = np.array(None)
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         lor.n_attributes = 2
         
         expected = pd.DataFrame(['column_1', 'column_2'], columns=['attribute names'])
         assert_frame_equal(lor._get_column_names(X), expected)
 
     def test_log_likelihood(self):
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         X = np.array([[1.0], [1.0], [1.0]])
         y = np.array([1, 1, 2])
         coefficients = np.array([1.0, 1.0])
@@ -124,7 +123,7 @@ class TestLinearOrdinalRegression():
         assert 'upper 0.90' in lor.summary
 
     def test_predict_linear_product(self, X_ucla, y_ucla):
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         lor.beta_ = np.array([1, -1, 2])
         assert lor.predict_linear_product(np.ones(3)) == 1 + -1 + 2
         assert lor.predict_linear_product(np.array([1, 0, 1.5])) == 1*1 + -1*0 + 2*1.5
@@ -156,7 +155,7 @@ class TestLinearOrdinalRegression():
             [0.0, 2.0, 1.0],
         ])
         y = [1, 2, 3]
-        lor = LinearOrdinalRegression()
+        lor = LinearOrdinalRegression(None)
         lor.beta_ = np.array([1.0, 0.5, -1.0])
         assert lor._compute_score(X, y) == (0.0 - 3.0) / (3.0 * 2.0 / 2.0 )
 

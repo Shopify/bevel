@@ -23,7 +23,7 @@ class LinearOrdinalRegression():
     """
 
     @abstractmethod
-    def __init__(self, significance=0.95, link=None):
+    def __init__(self, link, significance=0.95):
         self.significance = significance
         self.link = link
 
@@ -263,7 +263,7 @@ class OrderedLogit(LinearOrdinalRegression):
     """
 
     def __init__(self, significance=0.95):
-        super().__init__(significance, expit)
+        super().__init__(expit, significance=significance)
 
     def _gradient(self, coefficients, X_data, y_data):
         beta = coefficients[:self.n_attributes]
