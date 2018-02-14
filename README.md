@@ -7,9 +7,9 @@ In People Analytics at Shopify, we use ordinal regression to empower Shopify emp
 #### Using bevel
 
 ```python
-from bevel import OrdinalRegression
+from bevel.linear_ordinal_regression import OrderedLogit
 
-orf = OrdinalRegression()
+orf = OrderedLogit()
 orf.fit(X, y)
 orf.print_summary()
 
