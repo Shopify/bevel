@@ -23,9 +23,10 @@ class LinearOrdinalRegression():
     """
 
     @abstractmethod
-    def __init__(self, link, significance=0.95):
+    def __init__(self, link, diff_link, significance=0.95):
         self.significance = significance
         self.link = link
+        self.diff_link = diff_link
 
     def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
@@ -219,9 +220,28 @@ class LinearOrdinalRegression():
         z_minus = bounded_alpha[y_data-1] - X_data.dot(beta)
         return - 1.0 * np.sum(np.log(self.link(z_plus) - self.link(z_minus)))
 
-    @abstractmethod
-    def _gradient():
-        raise NotImplementedError()
+    def _gradient(self, coefficients, X_data, y_data):
+        beta = coefficients[:self.n_attributes]
+        gamma = coefficients[self.n_attributes:]
+        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
+
+        diff_link_plus = self.diff_link(bounded_alpha[y_data] - X_data.dot(beta))
+        diff_link_minus = self.diff_link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        denominator = self.link(bounded_alpha[y_data] - X_data.dot(beta)) - self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        
+        #the only way the denominator can vanish is if the numerator also vanishes
+        #so we can safely overwrite any division by zero that arises numerically
+        denominator[denominator == 0] = 1
+
+        quotient_plus = diff_link_plus / denominator
+        quotient_minus = diff_link_minus / denominator
+        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+
+        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
+        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
+
+        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
 
     def _compute_standard_errors(self, coefficients, X_data, y_data):
         hessian_function = Jacobian(self._gradient, method='forward')
@@ -262,31 +282,12 @@ class OrderedLogit(LinearOrdinalRegression):
       significance: the significance of confidence levels reported in the fit summary
     """
 
+    @staticmethod
+    def diff_expit(z):
+        return expit(z) * (1 - expit(z))
+
     def __init__(self, significance=0.95):
-        super().__init__(expit, significance=significance)
-
-    def _gradient(self, coefficients, X_data, y_data):
-        beta = coefficients[:self.n_attributes]
-        gamma = coefficients[self.n_attributes:]
-        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
-
-        phi_plus = self.link(bounded_alpha[y_data] - X_data.dot(beta))
-        phi_minus = self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
-        denominator = phi_plus - phi_minus
-        
-        #the only way the denominator can vanish is if the numerator also vanishes
-        #so we can safely overwrite any division by zero that arises numerically
-        denominator[denominator == 0] = 1
-
-        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
-        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
-        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-
-        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
-        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
-
-        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
+        super().__init__(expit, self.diff_expit, significance=significance)
 
 
 class OrderedProbit(LinearOrdinalRegression):
@@ -301,7 +302,4 @@ class OrderedProbit(LinearOrdinalRegression):
     """
 
     def __init__(self, significance=0.95):
-        super().__init__(significance, norm.cdf)
-
-    def _gradient(self, coefficients, X_data, y_data):
-        raise NotImplementedError()
+        super().__init__(norm.cdf, norm.pdf, significance=significance)
