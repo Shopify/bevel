@@ -24,8 +24,8 @@ ucla_data = pd.read_stata(ucla_filepath)
 # (accessed 8 December, 2017).
 
 academy_data = pd.read_stata(academy_filepath)
-# Ordered Probit and Logit Models.
-# from https://sites.google.com/site/econometricsacademy/econometrics-models/ordered-probit-and-logit-models
+# Katchova, Ani L. (2013) Econometrics Academy [Website and YouTube Channel]
+# Retrieved from Econometrics Academy Website: https://sites.google.com/site/econometricsacademy/
 # (accessed 10 March, 2018).
 
 @pytest.fixture
