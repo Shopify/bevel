@@ -21,14 +21,14 @@ class LinearOrdinalRegression():
 
     Parameters:
       link: a link function that is increasing and bounded by 0 and 1
-      diff_link: the derivative of the link function
+      deriv_link: the derivative of the link function
       significance: the significance of confidence levels reported in the fit summary
     """
 
-    def __init__(self, link, diff_link, significance=0.95):
+    def __init__(self, link, deriv_link, significance=0.95):
         self.significance = significance
         self.link = link
-        self.diff_link = diff_link
+        self.deriv_link = deriv_link
 
     def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
@@ -227,16 +227,16 @@ class LinearOrdinalRegression():
         gamma = coefficients[self.n_attributes:]
         bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
 
-        diff_link_plus = self.diff_link(bounded_alpha[y_data] - X_data.dot(beta))
-        diff_link_minus = self.diff_link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        deriv_link_plus = self.deriv_link(bounded_alpha[y_data] - X_data.dot(beta))
+        deriv_link_minus = self.deriv_link(bounded_alpha[y_data-1] - X_data.dot(beta))
         denominator = self.link(bounded_alpha[y_data] - X_data.dot(beta)) - self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
         
         #the only way the denominator can vanish is if the numerator also vanishes
         #so we can safely overwrite any division by zero that arises numerically
         denominator[denominator == 0] = 1
 
-        quotient_plus = diff_link_plus / denominator
-        quotient_minus = diff_link_minus / denominator
+        quotient_plus = deriv_link_plus / denominator
+        quotient_minus = deriv_link_minus / denominator
         indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
         indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
 
