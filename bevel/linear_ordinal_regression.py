@@ -205,6 +205,9 @@ class LinearOrdinalRegression():
         y_range = np.arange(1, self.n_classes + 1)
         self._y_dict = dict(zip(y_range, y_values))
 
+        self._indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+        self._indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+
         return np.vectorize(dict(zip(y_values, y_range)).get)(y_data)
 
     def _get_column_names(self, X):
@@ -237,11 +240,9 @@ class LinearOrdinalRegression():
 
         quotient_plus = deriv_link_plus / denominator
         quotient_minus = deriv_link_minus / denominator
-        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
 
         alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
-        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
+        beta_gradient = self._indicator_minus.dot(quotient_minus) - self._indicator_plus.dot(quotient_plus)
 
         return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
 

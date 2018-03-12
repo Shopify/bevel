@@ -209,6 +209,7 @@ class TestOrderedLogit():
         coefficients = np.array([1.0, 1.0])
         ol.n_attributes = 1
         ol.n_classes = 2
+        ol._prepare_y(y)
         
         expected = np.array([0.5, -0.5])
         assert_array_equal(ol._gradient(coefficients, X, y), expected)
