@@ -1,10 +1,9 @@
 import numpy as np
-import pandas as pd
 import warnings
 
-from abc import abstractmethod
 from numdifftools import Jacobian
 from numpy.linalg import inv
+from pandas import DataFrame
 from scipy import optimize
 from scipy.linalg import block_diag
 from scipy.special import expit
@@ -14,18 +13,22 @@ from scipy.stats import kendalltau
 
 class LinearOrdinalRegression():
     """
-    An abstract class for linear ordinal regression fitting. The cumulative distribution
+    A general class for linear ordinal regression fitting. The cumulative distribution
     for the probability of being classified into category p depends linearly on the regressors
     through a link function Phi:
 
     P(Y < p | X_i) = Phi(alpha_p - X_i.beta)
 
+    Parameters:
+      link: a link function that is increasing and bounded by 0 and 1
+      deriv_link: the derivative of the link function
+      significance: the significance of confidence levels reported in the fit summary
     """
 
-    @abstractmethod
-    def __init__(self, link, significance=0.95):
+    def __init__(self, link, deriv_link, significance=0.95):
         self.significance = significance
         self.link = link
+        self.deriv_link = deriv_link
 
     def fit(self, X, y, maxfun=100000, maxiter=100000, epsilon=10E-9):
         """
@@ -202,14 +205,17 @@ class LinearOrdinalRegression():
         y_range = np.arange(1, self.n_classes + 1)
         self._y_dict = dict(zip(y_range, y_values))
 
+        self._indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+        self._indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
+
         return np.vectorize(dict(zip(y_values, y_range)).get)(y_data)
 
     def _get_column_names(self, X):
-        if isinstance(X, pd.DataFrame):
+        if isinstance(X, DataFrame):
             column_names = X.columns.tolist()
         else:
             column_names = ['column_' + str(i+1) for i in range(self.n_attributes)]
-        return pd.DataFrame(column_names, columns=['attribute names'])
+        return DataFrame(column_names, columns=['attribute names'])
 
     def _log_likelihood(self, coefficients, X_data, y_data):
         beta = coefficients[:self.n_attributes]
@@ -219,9 +225,26 @@ class LinearOrdinalRegression():
         z_minus = bounded_alpha[y_data-1] - X_data.dot(beta)
         return - 1.0 * np.sum(np.log(self.link(z_plus) - self.link(z_minus)))
 
-    @abstractmethod
-    def _gradient():
-        raise NotImplementedError()
+    def _gradient(self, coefficients, X_data, y_data):
+        beta = coefficients[:self.n_attributes]
+        gamma = coefficients[self.n_attributes:]
+        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
+
+        deriv_link_plus = self.deriv_link(bounded_alpha[y_data] - X_data.dot(beta))
+        deriv_link_minus = self.deriv_link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        denominator = self.link(bounded_alpha[y_data] - X_data.dot(beta)) - self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
+        
+        #the only way the denominator can vanish is if the numerator also vanishes
+        #so we can safely overwrite any division by zero that arises numerically
+        denominator[denominator == 0] = 1
+
+        quotient_plus = deriv_link_plus / denominator
+        quotient_minus = deriv_link_minus / denominator
+
+        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
+        beta_gradient = self._indicator_minus.dot(quotient_minus) - self._indicator_plus.dot(quotient_plus)
+
+        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
 
     def _compute_standard_errors(self, coefficients, X_data, y_data):
         hessian_function = Jacobian(self._gradient, method='forward')
@@ -262,31 +285,12 @@ class OrderedLogit(LinearOrdinalRegression):
       significance: the significance of confidence levels reported in the fit summary
     """
 
+    @staticmethod
+    def diff_expit(z):
+        return expit(z) * (1 - expit(z))
+
     def __init__(self, significance=0.95):
-        super().__init__(expit, significance=significance)
-
-    def _gradient(self, coefficients, X_data, y_data):
-        beta = coefficients[:self.n_attributes]
-        gamma = coefficients[self.n_attributes:]
-        bounded_alpha = self._bounded_alpha(np.cumsum(gamma))
-
-        phi_plus = self.link(bounded_alpha[y_data] - X_data.dot(beta))
-        phi_minus = self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
-        denominator = phi_plus - phi_minus
-        
-        #the only way the denominator can vanish is if the numerator also vanishes
-        #so we can safely overwrite any division by zero that arises numerically
-        denominator[denominator == 0] = 1
-
-        quotient_plus = (1 - phi_plus) * (phi_plus / denominator)
-        quotient_minus = (1 - phi_minus) * (phi_minus / denominator)
-        indicator_plus = np.array([y_data == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-        indicator_minus = np.array([y_data - 1 == i + 1 for i in range(self.n_classes - 1)]) * 1.0
-
-        alpha_gradient = (quotient_plus - quotient_minus).dot(X_data)
-        beta_gradient = indicator_minus.dot(quotient_minus) - indicator_plus.dot(quotient_plus)
-
-        return np.append(alpha_gradient, beta_gradient).dot(self._compute_basis_change())
+        super().__init__(expit, self.diff_expit, significance=significance)
 
 
 class OrderedProbit(LinearOrdinalRegression):
@@ -301,7 +305,5 @@ class OrderedProbit(LinearOrdinalRegression):
     """
 
     def __init__(self, significance=0.95):
-        super().__init__(significance, norm.cdf)
+        super().__init__(norm.cdf, norm.pdf, significance=significance)
 
-    def _gradient(self, coefficients, X_data, y_data):
-        raise NotImplementedError()
