@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from abc import abstractmethod
 from numdifftools import Jacobian
 from numpy.linalg import inv
 from scipy import optimize
@@ -14,15 +13,18 @@ from scipy.stats import kendalltau
 
 class LinearOrdinalRegression():
     """
-    An abstract class for linear ordinal regression fitting. The cumulative distribution
+    An general class for linear ordinal regression fitting. The cumulative distribution
     for the probability of being classified into category p depends linearly on the regressors
     through a link function Phi:
 
     P(Y < p | X_i) = Phi(alpha_p - X_i.beta)
 
+    Parameters:
+      link: a link function that is increasing and bounded by 0 and 1
+      diff_link: the derivative of the link function
+      significance: the significance of confidence levels reported in the fit summary
     """
 
-    @abstractmethod
     def __init__(self, link, diff_link, significance=0.95):
         self.significance = significance
         self.link = link
@@ -303,3 +305,4 @@ class OrderedProbit(LinearOrdinalRegression):
 
     def __init__(self, significance=0.95):
         super().__init__(norm.cdf, norm.pdf, significance=significance)
+

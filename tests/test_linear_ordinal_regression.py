@@ -228,4 +228,4 @@ class TestOrderedProbit():
         
         expected_se_ = np.array([0.000983, 0.0128, 0.00238, 0.1146, 0.1149])
         assert_allclose(op.se_, expected_se_, rtol=0.01)
-        
+
