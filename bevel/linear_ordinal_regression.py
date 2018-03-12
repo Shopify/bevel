@@ -13,7 +13,7 @@ from scipy.stats import kendalltau
 
 class LinearOrdinalRegression():
     """
-    An general class for linear ordinal regression fitting. The cumulative distribution
+    A general class for linear ordinal regression fitting. The cumulative distribution
     for the probability of being classified into category p depends linearly on the regressors
     through a link function Phi:
 
