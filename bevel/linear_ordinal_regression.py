@@ -1,9 +1,9 @@
 import numpy as np
-import pandas as pd
 import warnings
 
 from numdifftools import Jacobian
 from numpy.linalg import inv
+from pandas import DataFrame
 from scipy import optimize
 from scipy.linalg import block_diag
 from scipy.special import expit
@@ -208,11 +208,11 @@ class LinearOrdinalRegression():
         return np.vectorize(dict(zip(y_values, y_range)).get)(y_data)
 
     def _get_column_names(self, X):
-        if isinstance(X, pd.DataFrame):
+        if isinstance(X, DataFrame):
             column_names = X.columns.tolist()
         else:
             column_names = ['column_' + str(i+1) for i in range(self.n_attributes)]
-        return pd.DataFrame(column_names, columns=['attribute names'])
+        return DataFrame(column_names, columns=['attribute names'])
 
     def _log_likelihood(self, coefficients, X_data, y_data):
         beta = coefficients[:self.n_attributes]
