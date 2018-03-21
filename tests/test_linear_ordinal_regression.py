@@ -85,6 +85,25 @@ class TestLinearOrdinalRegression():
         assert_array_equal(y_data, np.array([1,2,3]))
         assert lor.n_classes == 3
 
+    def test_indicator(self):
+        lor = LinearOrdinalRegression(None, None)
+        y = np.array([0, 1, 3, 1, 0])
+        y_data = lor._prepare_y(y)
+        
+        expected_indicator_plus = np.array([
+            [1, 0, 0, 0, 1],
+            [0, 1, 0, 1, 0]
+        ])
+
+        expected_indicator_minus = np.array([
+            [0, 1, 0, 1, 0],
+            [0, 0, 1, 0, 0]
+        ])
+
+        assert_array_equal(lor._indicator_plus, expected_indicator_plus)
+        assert_array_equal(lor._indicator_minus, expected_indicator_minus)
+
+
     def test_prepare_X(self):
         lor = LinearOrdinalRegression(None, None)
         X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
