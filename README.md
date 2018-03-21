@@ -1,4 +1,5 @@
-# bevel
+# bevel [![Build Status](https://circleci.com/gh/Shopify/bevel.png?circle-token=d62dea911238d39ddf73543d75fed28268d2f043)](https://circleci.com/gh/Shopify/bevel)
+
 
 Ordinal regression refers to a number of techniques that are designed to classify inputs into ordered (or ordinal) categories. This type of data is common in social science research settings where the dependent variable often comes from opinion polls or evaluations. For example, ordinal regression can be used to predict the letter grades of students based on the time they spend studying, or Likert scale responses to a survey based on the annual income of the respondent.
 
