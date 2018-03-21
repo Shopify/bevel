@@ -87,7 +87,7 @@ class TestLinearOrdinalRegression():
 
     def test_prepare_X(self):
         lor = LinearOrdinalRegression(None, None)
-        X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, 4], [3, -3, 3]])
+        X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
         X_data, X_scale, X_mean, X_std = lor._prepare_X(X)
         
         assert_array_equal(X_data, X)
