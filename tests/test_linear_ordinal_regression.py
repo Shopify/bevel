@@ -87,7 +87,7 @@ class TestLinearOrdinalRegression():
 
     def test_indicator(self):
         lor = LinearOrdinalRegression(None, None)
-        y = np.array([0,1,3,1,0])
+        y = np.array([0, 1, 3, 1, 0])
         y_data = lor._prepare_y(y)
         
         expected_indicator_plus = np.array([
