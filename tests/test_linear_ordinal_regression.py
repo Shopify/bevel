@@ -52,10 +52,12 @@ def sample_lor():
     lor._y_dict = {1:1, 2:2, 3:7}
     lor.n_attributes = 3
     lor.n_classes = 3
+    lor.N = 10
+    lor.score_ = 0.9
     lor.se_ = np.array([1, 1, 1, 1, 1])
     lor.p_values_ = np.array([0, 0, 0, 0, 0])
     lor.attribute_names = pd.DataFrame(
-        ['attribute_1', 'attribute_2', 'attribute_3'], 
+        ['attribute_1', 'attribute_2', 'attribute_3'],
         columns=['attribute names']
     )
     return lor
@@ -66,7 +68,7 @@ class TestLinearOrdinalRegression():
         lor = LinearOrdinalRegression(None, None)
         lor.n_attributes = 2
         lor.n_classes = 5
-        
+
         expected_P = np.array([
             [1., 0., 0., 0., 0., 0.],
             [0., 1., 0., 0., 0., 0.],
@@ -81,7 +83,7 @@ class TestLinearOrdinalRegression():
         lor = LinearOrdinalRegression(None, None)
         y = np.array([1,3,5])
         y_data = lor._prepare_y(y)
-        
+
         assert_array_equal(y_data, np.array([1,2,3]))
         assert lor.n_classes == 3
 
@@ -89,7 +91,7 @@ class TestLinearOrdinalRegression():
         lor = LinearOrdinalRegression(None, None)
         y = np.array([0, 1, 3, 1, 0])
         y_data = lor._prepare_y(y)
-        
+
         expected_indicator_plus = np.array([
             [1, 0, 0, 0, 1],
             [0, 1, 0, 1, 0]
@@ -108,7 +110,7 @@ class TestLinearOrdinalRegression():
         lor = LinearOrdinalRegression(None, None)
         X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
         X_data, X_scale, X_mean, X_std = lor._prepare_X(X)
-        
+
         assert_array_equal(X_data, X)
         assert_array_equal(X_scale, X / 2.0)
         assert_array_equal(X_mean, np.array([0, 0, 0]))
@@ -124,7 +126,7 @@ class TestLinearOrdinalRegression():
 
     def test_get_column_names_df(self):
         X = pd.DataFrame(columns=['a', 'b'])
-        
+
         expected = pd.DataFrame(['a', 'b'], columns=['attribute names'])
         assert_frame_equal(LinearOrdinalRegression(None, None)._get_column_names(X), expected)
 
@@ -132,7 +134,7 @@ class TestLinearOrdinalRegression():
         X = np.array(None)
         lor = LinearOrdinalRegression(None, None)
         lor.n_attributes = 2
-        
+
         expected = pd.DataFrame(['column_1', 'column_2'], columns=['attribute names'])
         assert_frame_equal(lor._get_column_names(X), expected)
 
@@ -196,21 +198,21 @@ class TestOrderedLogit():
     def test_ucla_coef(self, X_ucla, y_ucla):
         ol = OrderedLogit()
         ol.fit(X_ucla, y_ucla)
-        
+
         expected_coef_ = np.array([1.04769, -0.05879, 0.61594, 2.20391, 4.29936])
         assert_allclose(ol.coef_, expected_coef_, rtol=0.01)
 
     def test_ucla_se(self, X_ucla, y_ucla):
         ol = OrderedLogit()
         ol.fit(X_ucla, y_ucla)
-        
+
         expected_se_ = np.array([0.2658, 0.2979, 0.2606, 0.7795, 0.8043])
         assert_allclose(ol.se_, expected_se_, rtol=0.01)
 
     def test_ucla_z_values(self, X_ucla, y_ucla):
         ol = OrderedLogit()
         ol.fit(X_ucla, y_ucla)
-        
+
         expected_z_values_ = np.array([3.9418, -0.1974, 2.3632, 2.8272, 5.3453])
         assert_allclose(ol._compute_z_values(), expected_z_values_, rtol=0.01)
 
@@ -229,7 +231,7 @@ class TestOrderedLogit():
         ol.n_attributes = 1
         ol.n_classes = 2
         ol._prepare_y(y)
-        
+
         expected = np.array([0.5, -0.5])
         assert_array_equal(ol._gradient(coefficients, X, y), expected)
 
@@ -245,7 +247,7 @@ class TestOrderedProbit():
     def test_academy_se(self, X_academy, y_academy):
         op = OrderedProbit()
         op.fit(X_academy, y_academy)
-        
+
         expected_se_ = np.array([0.000983, 0.0128, 0.00238, 0.1146, 0.1149])
         assert_allclose(op.se_, expected_se_, rtol=0.01)
 
