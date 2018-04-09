@@ -11,6 +11,9 @@ from scipy.stats import norm
 from scipy.stats import kendalltau
 
 
+__all__ = ['OrderedLogit', 'OrderedProbit']
+
+
 class LinearOrdinalRegression():
     """
     A general class for linear ordinal regression fitting. The cumulative distribution
@@ -36,16 +39,16 @@ class LinearOrdinalRegression():
         log likelihood function.
 
         Parameters:
-          X: a pandas DataFrame or numpy array of numerical regressors 
-          y: a column of ordinal-valued data 
+          X: a pandas DataFrame or numpy array of numerical regressors
+          y: a column of ordinal-valued data
           maxfun: the maximum number of function calls used by scipy.optimize()
           maxiter: the maximum number of iterations used by scipy.optimize()
           epsilon: the minimum difference between successive intercepts, alpha_{p+1} - alpha_p
 
         Returns:
-          self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined 
+          self, with alpha_, beta_, coef_, se_, p_values_ and score_ properties determined
         """
-        
+
         X_data, X_scale, X_mean, X_std = self._prepare_X(X)
         y_data = self._prepare_y(y)
 
@@ -71,7 +74,7 @@ class LinearOrdinalRegression():
         gamma = optimization.x[self.n_attributes:]
         gamma[0] = gamma[0] + X_mean.dot(self.beta_)
         self.alpha_ = np.cumsum(gamma)
-        
+
         self.se_ = self._compute_standard_errors(np.append(self.beta_, gamma), X_data, y_data)
         self.p_values_ = self._compute_p_values()
         self.score_ = self._compute_score(X_data, y_data)
@@ -108,7 +111,7 @@ class LinearOrdinalRegression():
         """
         Print summary statistics describing the fit.
         """
-        
+
         def significance_code(p):
             if p < 0.001:
                 return '***'
@@ -160,7 +163,7 @@ class LinearOrdinalRegression():
         Returns:
           a numpy array with n_classes columns listing the probability of belonging to each class
         """
-        
+
         bounded_alpha = self._bounded_alpha(self.alpha_)
         z = bounded_alpha - self.predict_linear_product(X)
         cumulative_dist = self.link(z)
@@ -176,7 +179,7 @@ class LinearOrdinalRegression():
         Returns:
           a numpy array with the predicted most likely class for each input
         """
-        
+
         probs = self.predict_probabilities(X)
         raw_predictions = np.argmax(probs, axis=1) + 1
         return np.vectorize(self._y_dict.get)(raw_predictions)
@@ -188,7 +191,7 @@ class LinearOrdinalRegression():
 
         X_std = X_data.std(0)
         X_mean = X_data.mean(0)
-        
+
         trivial_X = X_std == 0
         if any(trivial_X):
             raise ValueError(
@@ -235,7 +238,7 @@ class LinearOrdinalRegression():
         deriv_link_plus = self.deriv_link(bounded_alpha[y_data] - X_data.dot(beta))
         deriv_link_minus = self.deriv_link(bounded_alpha[y_data-1] - X_data.dot(beta))
         denominator = self.link(bounded_alpha[y_data] - X_data.dot(beta)) - self.link(bounded_alpha[y_data-1] - X_data.dot(beta))
-        
+
         #the only way the denominator can vanish is if the numerator also vanishes
         #so we can safely overwrite any division by zero that arises numerically
         denominator[denominator == 0] = 1
