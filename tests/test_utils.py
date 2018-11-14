@@ -1,6 +1,6 @@
 import pytest
 
-from bevel.df_utils import *
+from bevel.utils import *
 
 from pandas.testing import assert_frame_equal
 
