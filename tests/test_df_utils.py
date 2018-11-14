@@ -28,6 +28,7 @@ def test_pivot_proportions(sample_response_data):
     expected = expected.set_index('response', drop=True).rename_axis('groups_a', axis='columns')
     assert_frame_equal(actual, expected)
 
+
 def test_pivot_proportions_with_weights(sample_response_data):
     actual = pivot_proportions(
         sample_response_data, 

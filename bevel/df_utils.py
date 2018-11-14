@@ -11,5 +11,3 @@ def pivot_proportions(df, groups, responses, weights=1):
     )
     pivoted_counts = pivoted_counts['weights'].sort_index(axis=1)
     return (pivoted_counts / pivoted_counts.sum()).fillna(0)
-
-
