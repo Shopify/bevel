@@ -9,6 +9,7 @@ def pivot_proportions(df, groups, responses, weights=1):
       df: a pandas DataFrame with data to be aggregated
       groups: the name of the column containing the groups to partition by
       respones: the name of the column that contains responses to aggregate into proportions
+      weights: the statistical weighting associated with each response
 
     Returns:
       a pandas DataFrame containing the proportion of responses within each group
