@@ -1,6 +1,8 @@
 import os
 
 import matplotlib.cm as mcm
+import matplotlib.pyplot as plt
+
 import pandas as pd
 import pytest
 
@@ -34,11 +36,6 @@ def sample_dbp_even(sample_data_even):
     return _DivergentBarPlotter(sample_data_even, 'group', 'resps')
 
 class TestDivergentBarPlotter():
-
-    def setup_method(self, method):
-        pytest.importorskip("matplotlib")
-        from matplotlib import pyplot as plt
-        self.plt = plt
 
     def test_midpoint_default_even(self, sample_dbp_even):
         assert sample_dbp_even.midpoint == 2.5
@@ -93,4 +90,4 @@ class TestDivergentBarPlotter():
     @pytest.mark.skipif("CIRCLECI" in os.environ, reason="Test requires display")
     def test_divergent_stacked_bar(self, block, sample_data_odd):
         ax = divergent_stacked_bar(sample_data_odd, 'group', 'resps')
-        self.plt.show(block=block)
+        plt.show(block=block)

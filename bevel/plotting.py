@@ -112,5 +112,3 @@ def divergent_stacked_bar(df, group, response, weights=1, midpoint=None, respons
         ax: a pyplot axis object containing the graph
     """
     return _DivergentBarPlotter(df, group, response, weights, midpoint, response_labels, cmap).plot()
-
-
