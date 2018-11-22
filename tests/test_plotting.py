@@ -1,8 +1,11 @@
+import os
+
 import matplotlib.cm as mcm
 import pandas as pd
 import pytest
 
 from bevel.plotting import _DivergentBarPlotter
+from bevel.plotting import divergent_stacked_bar
 
 from pandas.testing import assert_frame_equal
 
@@ -31,6 +34,11 @@ def sample_dbp_even(sample_data_even):
     return _DivergentBarPlotter(sample_data_even, 'group', 'resps')
 
 class TestDivergentBarPlotter():
+
+    def setup_method(self, method):
+        pytest.importorskip("matplotlib")
+        from matplotlib import pyplot as plt
+        self.plt = plt
 
     def test_midpoint_default_even(self, sample_dbp_even):
         assert sample_dbp_even.midpoint == 2.5
@@ -81,3 +89,8 @@ class TestDivergentBarPlotter():
         actual = sample_dbp_even._compute_bar_colors(mcm.binary)
         bar_colors = [pytest.approx(actual[r][0]) for r in sample_dbp_even.response_values]        
         assert bar_colors == [1.0, 2.0 / 3.0, 1.0 /3.0, 0.0]
+
+    @pytest.mark.skipif("CIRCLECI" in os.environ, reason="Test requires display")
+    def test_divergent_stacked_bar(self, block, sample_data_odd):
+        ax = divergent_stacked_bar(sample_data_odd, 'group', 'resps')
+        self.plt.show(block=block)

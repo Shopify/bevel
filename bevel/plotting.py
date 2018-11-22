@@ -7,7 +7,7 @@ from bevel.utils import pivot_proportions
 
 class _DivergentBarPlotter():
 
-    def __init__(self, df, group, response, weights=1, midpoint=None, response_labels=None, cmap=mcm.RdBu):
+    def __init__(self, df, group, response, weights=1, midpoint=None, response_labels=None, cmap=mcm.summer):
         self.proportions = pivot_proportions(df, group, response, weights)
         self.response_values = self.proportions.index.values
         self.group_values = self.proportions.columns
@@ -54,8 +54,6 @@ class _DivergentBarPlotter():
 
 
     def _label_bars(self, ax):
-        import matplotlib.patches as mp
-
         colors_to_label = [self.bar_colors[min(self.response_values)], self.bar_colors[max(self.response_values)]]
         label_patches = [patch for patch in ax.patches if patch.get_fc() in colors_to_label]
         
@@ -75,6 +73,7 @@ class _DivergentBarPlotter():
 
 
     def _add_legend(self, ax):
+        import matplotlib.patches as mp
         legend_handles = [
             mp.Patch(label=self.response_labels[l], color=self.bar_colors[l]) for l in self.response_values
         ]
@@ -96,7 +95,7 @@ class _DivergentBarPlotter():
         return ax
         
 
-def divergent_stacked_bar(df, group, response, weights=1, midpoint=None, response_labels=None, cmap=mcm.RdBu):
+def divergent_stacked_bar(df, group, response, weights=1, midpoint=None, response_labels=None, cmap=mcm.summer):
     """
     Aggregate data from a dataframe and plot the results as a divergent stacked bar chart
 
