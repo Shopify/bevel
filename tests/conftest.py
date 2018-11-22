@@ -14,7 +14,7 @@ def pytest_addoption(parser):
         "--block", 
         action="store", 
         default=True,
-        help="Whether the plot block should be displayed."
+        help="Whether the plotting should block execution."
     )
 
 
