@@ -105,7 +105,6 @@ class TestLinearOrdinalRegression():
         assert_array_equal(lor._indicator_plus, expected_indicator_plus)
         assert_array_equal(lor._indicator_minus, expected_indicator_minus)
 
-
     def test_prepare_X(self):
         lor = LinearOrdinalRegression(None, None)
         X = np.array([[-1, 0, 1], [0, 1, -1], [1, -1, 0], [-3, 3, -3], [3, -3, 3]])
@@ -117,6 +116,12 @@ class TestLinearOrdinalRegression():
         assert_array_equal(X_std, np.array([2, 2, 2]))
         assert lor.N == 5
         assert lor.n_attributes == 3
+
+    def test_prepare_X_from_single_column_dataframe(self, X_ucla, y_ucla):
+        X_ucla = X_ucla.iloc[:, 0]
+        lor = LinearOrdinalRegression(None, None)
+        lor._prepare_X(X_ucla)
+        assert lor.n_attributes == 1
 
     def test_vanishing_variance_raises_error(self):
         lor = LinearOrdinalRegression(None, None)

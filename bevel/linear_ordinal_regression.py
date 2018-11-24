@@ -186,9 +186,9 @@ class LinearOrdinalRegression():
 
     def _prepare_X(self, X):
         X_data = np.asarray(X)
+        X_data = X_data[:, None] if len(X_data.shape) == 1 else X_data
         self.N, self.n_attributes = X_data.shape
         self.attribute_names = self._get_column_names(X)
-
         X_std = X_data.std(0)
         X_mean = X_data.mean(0)
 
