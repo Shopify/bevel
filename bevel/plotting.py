@@ -10,6 +10,8 @@ class _DivergentBarPlotter():
     def __init__(self, df, group, response, weights=1, midpoint=None, response_labels=None, cmap=mcm.summer):
         self.proportions = pivot_proportions(df, group, response, weights)
         self.response_values = self.proportions.index.values
+        self.min_response = min(self.response_values)
+        self.max_response = max(self.response_values)
         self.group_values = self.proportions.columns
         self.midpoint = midpoint
         self.response_labels = response_labels
@@ -23,7 +25,7 @@ class _DivergentBarPlotter():
 
     @midpoint.setter
     def midpoint(self, value):
-        self._midpoint = value or (min(self.response_values) + max(self.response_values)) / 2.0
+        self._midpoint = value or (self.min_response + self.max_response) / 2.0
 
 
     @property
@@ -48,13 +50,13 @@ class _DivergentBarPlotter():
 
 
     def _compute_bar_colors(self, cmap):
-        response_range = self.response_values - min(self.response_values)
+        response_range = self.response_values - self.min_response
         color_samples = [cmap(x / max(response_range)) for x in response_range]
         return dict(zip(self.response_values, color_samples))
 
 
     def _label_bars(self, ax):
-        colors_to_label = [self.bar_colors[min(self.response_values)], self.bar_colors[max(self.response_values)]]
+        colors_to_label = [self.bar_colors[self.min_response], self.bar_colors[self.max_response]]
         label_patches = [patch for patch in ax.patches if patch.get_fc() in colors_to_label]
         
         for patch in label_patches:
