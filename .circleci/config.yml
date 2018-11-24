@@ -32,4 +32,4 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            py.test -s -vv 
+            py.test -s -vv
