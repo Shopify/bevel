@@ -16,7 +16,7 @@ The design matrix can be a numpy array, or a pandas DataFrame. The benefit of us
 Below is an example of fitting with the `OrderedLogit` model. 
 
 ```python
-from bevel import OrderedLogit
+from bevel.linear_ordinal_regression import OrderedLogit
 
 orf = OrderedLogit()
 orf.fit(X, y)
