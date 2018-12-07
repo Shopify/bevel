@@ -18,8 +18,8 @@ Below is an example of fitting with the `OrderedLogit` model.
 ```python
 from bevel.linear_ordinal_regression import OrderedLogit
 
-orf = OrderedLogit()
-orf.fit(X, y)
+ol = OrderedLogit()
+ol.fit(X, y)
 ```
 
 
@@ -29,7 +29,7 @@ After bevel fits the model to the data, additional methods are available to use.
 
 ```python
 
-orf.print_summary()
+ol.print_summary()
 """
                    beta  se(beta)      p  lower 0.95  upper 0.95
 attribute names
@@ -49,8 +49,8 @@ Another goal of fitting is predicting outcomes from new datasets. For this, beve
 
 
 ```python
-orf.predict_probabilities(X)  # returns a array with the probabilities of being in each class.
-orf.predict_class(X)  # returns the class with the highest probability
-orf.predict_linear_product(X)  # returns the dot product of X and the fitted coefficients
+ol.predict_probabilities(X)  # returns a array with the probabilities of being in each class.
+ol.predict_class(X)  # returns the class with the highest probability
+ol.predict_linear_product(X)  # returns the dot product of X and the fitted coefficients
 ```
 
