@@ -201,7 +201,7 @@ class LinearOrdinalRegression():
         return X_data, (X_data - X_mean) / X_std, X_mean, X_std
 
     def _prepare_y(self, y):
-        y_data = np.asarray(y).astype(np.int)
+        y_data = np.asarray(y).astype(int)
         y_values = np.sort(np.unique(y_data))
 
         self.n_classes = len(y_values)

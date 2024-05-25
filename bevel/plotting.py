@@ -41,12 +41,12 @@ class _DivergentBarPlotter():
     def _compute_bar_sizes(self):
 
         def accumulate(df, ascending=True):
-            return df.append(middle).sort_index(ascending=ascending).cumsum().iloc[::-1]
+            return df._append(middle).sort_index(ascending=ascending).cumsum().iloc[::-1]
         
         middle = self.proportions[self.proportions.index == self.midpoint] * 0.5    
         right_bars = accumulate(self.proportions[self.proportions.index > self.midpoint])
         left_bars = -1.0 * accumulate(self.proportions[self.proportions.index < self.midpoint], False)
-        return left_bars.append(right_bars)
+        return left_bars._append(right_bars)
 
 
     def _compute_bar_colors(self, cmap):
