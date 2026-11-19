@@ -1,3 +1,5 @@
+> **This repository is no longer maintained.** It has been archived by Shopify and receives no updates or security fixes.
+
 # bevel [![Build Status](https://circleci.com/gh/Shopify/bevel.png?circle-token=d62dea911238d39ddf73543d75fed28268d2f043)](https://circleci.com/gh/Shopify/bevel)
 
 
@@ -53,4 +55,3 @@ ol.predict_probabilities(X)  # returns a array with the probabilities of being i
 ol.predict_class(X)  # returns the class with the highest probability
 ol.predict_linear_product(X)  # returns the dot product of X and the fitted coefficients
 ```
-
